@@ -639,6 +639,11 @@ a:hover {
     color: var(--gray-300);
 }
 
+.badge-pending_unblock {
+    background: var(--info-100);
+    color: var(--info-600);
+}
+
 .badge-active {
     background: var(--info-100);
     color: var(--info-600);

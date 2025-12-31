@@ -40,7 +40,7 @@ const DashboardHome = () => {
         const today = new Date().toDateString();
         return v.status === 'approved' && new Date(v.entryTime).toDateString() === today;
     });
-    const blockedVisitors = myVisitors.filter(v => v.status === 'blocked');
+    const blockedVisitors = myVisitors.filter(v => v.status === 'blocked' || v.status === 'pending_unblock');
 
     return (
         <div>
@@ -292,7 +292,8 @@ const PendingPage = () => {
 // Visit History
 const HistoryPage = () => {
     const { currentUser } = useAuth();
-    const { visitors } = useData();
+    const { visitors, updateVisitor } = useData();
+    const [showBlockConfirm, setShowBlockConfirm] = useState(null);
 
     const myVisitors = visitors
         .filter(v => v.residentId === currentUser?.id && v.status !== 'pending')
@@ -319,6 +320,7 @@ const HistoryPage = () => {
                                     <th>Entry Time</th>
                                     <th>Exit Time</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -351,6 +353,18 @@ const HistoryPage = () => {
                                         <td>
                                             <StatusBadge status={visitor.status} />
                                         </td>
+                                        <td>
+                                            {visitor.status !== 'blocked' && visitor.status !== 'pending_unblock' && (
+                                                <button
+                                                    className="btn btn-ghost btn-sm"
+                                                    onClick={() => setShowBlockConfirm(visitor)}
+                                                    style={{ color: 'var(--gray-400)' }}
+                                                >
+                                                    <Ban size={14} />
+                                                    Block
+                                                </button>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -358,6 +372,22 @@ const HistoryPage = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={!!showBlockConfirm}
+                onClose={() => setShowBlockConfirm(null)}
+                onConfirm={() => {
+                    updateVisitor(showBlockConfirm.id, {
+                        status: 'blocked',
+                        blockedBy: currentUser.id
+                    });
+                    setShowBlockConfirm(null);
+                }}
+                title="Block Visitor"
+                message={`Are you sure you want to block ${showBlockConfirm?.name}? Blocked visitors cannot be approved until unblocked.`}
+                confirmText="Block"
+                variant="danger"
+            />
         </div>
     );
 };
@@ -369,7 +399,7 @@ const BlockedPage = () => {
     const [unblockConfirm, setUnblockConfirm] = useState(null);
 
     const blockedVisitors = visitors.filter(v =>
-        v.residentId === currentUser?.id && v.status === 'blocked'
+        v.residentId === currentUser?.id && (v.status === 'blocked' || v.status === 'pending_unblock')
     );
 
     const handleUnblock = (visitorId) => {
@@ -424,13 +454,17 @@ const BlockedPage = () => {
                                         <td className="text-muted">{visitor.contactNumber}</td>
                                         <td className="text-sm text-muted">{formatDateTime(visitor.entryTime)}</td>
                                         <td>
-                                            <button
-                                                className="btn btn-warning btn-sm"
-                                                onClick={() => setUnblockConfirm(visitor)}
-                                            >
-                                                <Unlock size={14} />
-                                                Request Unblock
-                                            </button>
+                                            {visitor.status === 'pending_unblock' ? (
+                                                <StatusBadge status={visitor.status} />
+                                            ) : (
+                                                <button
+                                                    className="btn btn-warning btn-sm"
+                                                    onClick={() => setUnblockConfirm(visitor)}
+                                                >
+                                                    <Unlock size={14} />
+                                                    Request Unblock
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

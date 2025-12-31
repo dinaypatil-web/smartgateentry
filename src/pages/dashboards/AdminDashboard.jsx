@@ -9,7 +9,7 @@ import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
-    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck
+    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
@@ -22,6 +22,7 @@ const sidebarItems = [
             { path: '/residents', label: 'Residents', icon: Users },
             { path: '/security', label: 'Security Personnel', icon: Shield },
             { path: '/visitor-log', label: 'Visitor Log', icon: ClipboardList },
+            { path: '/unblock-requests', label: 'Unblock Requests', icon: Unlock },
             { path: '/my-roles', label: 'My Roles', icon: Users }
         ]
     }
@@ -90,15 +91,109 @@ const DashboardHome = () => {
                 </div>
 
                 <div className="stat-card">
-                    <div className="stat-icon">
-                        <ClipboardList size={24} />
+                    <div className="stat-icon" style={{ background: 'linear-gradient(135deg, var(--info-500), var(--info-600))' }}>
+                        <Unlock size={24} />
                     </div>
                     <div className="stat-content">
-                        <div className="stat-value">{todayVisitors.length}</div>
-                        <div className="stat-label">Today's Visitors</div>
+                        <div className="stat-value">{visitors.filter(v => v.societyId === currentRole?.societyId && v.status === 'pending_unblock').length}</div>
+                        <div className="stat-label">Unblock Requests</div>
                     </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// Unblock Requests Management
+const UnblockRequestsPage = () => {
+    const { currentRole } = useAuth();
+    const { visitors, users, updateVisitor } = useData();
+
+    const requests = visitors.filter(v =>
+        v.societyId === currentRole?.societyId && v.status === 'pending_unblock'
+    );
+
+    const getResidentName = (residentId) => {
+        const resident = users.find(u => u.id === residentId);
+        return resident?.name || 'Unknown';
+    };
+
+    const handleApproveUnblock = (visitorId) => {
+        updateVisitor(visitorId, { status: 'unblocked' });
+    };
+
+    const handleRejectUnblock = (visitorId) => {
+        updateVisitor(visitorId, { status: 'blocked' }); // Stay blocked
+    };
+
+    return (
+        <div>
+            <h2 className="mb-6">Visitor Unblock Requests</h2>
+
+            {requests.length === 0 ? (
+                <EmptyState
+                    icon={Unlock}
+                    title="No Unblock Requests"
+                    description="When residents request to unblock a visitor, it will appear here."
+                />
+            ) : (
+                <div className="card">
+                    <div className="table-container">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Visitor</th>
+                                    <th>Contact</th>
+                                    <th>Requested By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {requests.map(visitor => (
+                                    <tr key={visitor.id}>
+                                        <td>
+                                            <div className="flex gap-3" style={{ alignItems: 'center' }}>
+                                                {visitor.photo ? (
+                                                    <img
+                                                        src={visitor.photo}
+                                                        alt={visitor.name}
+                                                        style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    <div className="header-avatar" style={{ width: 40, height: 40, fontSize: '0.75rem' }}>
+                                                        {getInitials(visitor.name)}
+                                                    </div>
+                                                )}
+                                                <span className="font-medium">{visitor.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="text-muted">{visitor.contactNumber}</td>
+                                        <td className="text-muted">{getResidentName(visitor.unblockRequestedBy || visitor.residentId)}</td>
+                                        <td>
+                                            <div className="table-actions">
+                                                <button
+                                                    className="btn btn-success btn-sm"
+                                                    onClick={() => handleApproveUnblock(visitor.id)}
+                                                >
+                                                    <Check size={14} />
+                                                    Approve Unblock
+                                                </button>
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => handleRejectUnblock(visitor.id)}
+                                                >
+                                                    <X size={14} />
+                                                    Reject Request
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -597,6 +692,7 @@ const AdminDashboard = () => {
                         <Route path="/residents" element={<ResidentsPage />} />
                         <Route path="/security" element={<SecurityPage />} />
                         <Route path="/visitor-log" element={<VisitorLogPage />} />
+                        <Route path="/unblock-requests" element={<UnblockRequestsPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
                     </Routes>
                 </div>

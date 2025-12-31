@@ -9,6 +9,10 @@ const StatusBadge = ({ status }) => {
                 return 'badge-rejected';
             case 'blocked':
                 return 'badge-blocked';
+            case 'pending_unblock':
+                return 'badge-pending_unblock';
+            case 'unblocked':
+                return 'badge-approved'; // Use approved style for unblocked
             case 'active':
                 return 'badge-active';
             default:
