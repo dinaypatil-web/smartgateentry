@@ -7,9 +7,11 @@ import Sidebar from '../../components/Sidebar';
 import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
+import NoticeBoard from '../../components/NoticeBoard';
 import {
     LayoutDashboard, UserCheck, History, Ban,
-    Check, X, Unlock, Eye, Phone, MapPin, FileText, Users
+    Check, X, Unlock, Eye, Phone, MapPin, FileText, Users,
+    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
@@ -20,6 +22,8 @@ const sidebarItems = [
         items: [
             { path: '', label: 'Dashboard', icon: LayoutDashboard },
             { path: '/pending', label: 'Pending Approvals', icon: UserCheck },
+            { path: '/invites', label: 'Invites', icon: Ticket },
+            { path: '/notices', label: 'Notice Board', icon: Megaphone },
             { path: '/history', label: 'Visit History', icon: History },
             { path: '/blocked', label: 'Blocked Visitors', icon: Ban },
             { path: '/my-roles', label: 'My Roles', icon: Users }
@@ -498,12 +502,200 @@ const ResidentDashboard = () => {
                     <Routes>
                         <Route path="/" element={<DashboardHome />} />
                         <Route path="/pending" element={<PendingPage />} />
+                        <Route path="/invites" element={<InvitesPage />} />
+                        <Route path="/notices" element={<NoticeBoardPage />} />
                         <Route path="/history" element={<HistoryPage />} />
                         <Route path="/blocked" element={<BlockedPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
                     </Routes>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// Pre-Approval / Invites Management
+const InvitesPage = () => {
+    const { currentUser, currentRole } = useAuth();
+    const { addPreApproval, updatePreApproval, preApprovals } = useData();
+    const [showAddInvite, setShowAddInvite] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        contactNumber: '',
+        purpose: '',
+        expectedDate: new Date().toISOString().split('T')[0],
+        type: 'guest' // guest, delivery, service
+    });
+
+    const myInvites = preApprovals.filter(p => p.residentId === currentUser?.id);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        addPreApproval({
+            ...formData,
+            residentId: currentUser.id,
+            societyId: currentRole.societyId,
+            passCode: Math.floor(100000 + Math.random() * 900000).toString() // Generate 6 digit code
+        });
+        setShowAddInvite(false);
+        setFormData({ name: '', contactNumber: '', purpose: '', expectedDate: new Date().toISOString().split('T')[0], type: 'guest' });
+    };
+
+    const handleCancelInvite = (id) => {
+        updatePreApproval(id, { status: 'cancelled' });
+    };
+
+    return (
+        <div>
+            <div className="flex-between mb-6">
+                <h2>My Invites & Pre-Approvals</h2>
+                <button className="btn btn-primary" onClick={() => setShowAddInvite(true)}>
+                    <Plus size={18} />
+                    New Invite
+                </button>
+            </div>
+
+            {myInvites.length === 0 ? (
+                <EmptyState
+                    icon={Ticket}
+                    title="No Active Invites"
+                    description="Generate pre-approval passes for your guests to skip the wait at the gate."
+                />
+            ) : (
+                <div className="grid-2">
+                    {myInvites.map(invite => (
+                        <div key={invite.id} className="card animate-slideUp">
+                            <div className="flex-between mb-4">
+                                <div className="flex gap-3">
+                                    <div className="stat-icon" style={{ width: 40, height: 40, background: 'var(--bg-glass-heavy)' }}>
+                                        <Ticket size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold">{invite.name}</div>
+                                        <div className="text-xs text-muted">{invite.type.toUpperCase()}</div>
+                                    </div>
+                                </div>
+                                <StatusBadge status={invite.status} />
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                                <div className="flex gap-2 text-sm text-muted">
+                                    <Calendar size={14} />
+                                    {invite.expectedDate}
+                                </div>
+                                <div className="flex gap-2 text-sm text-muted">
+                                    <FileText size={14} />
+                                    {invite.purpose}
+                                </div>
+                            </div>
+
+                            {invite.status === 'valid' && (
+                                <div className="p-3 bg-glass border border-dashed border-primary-500 rounded-lg text-center mb-4">
+                                    <div className="text-xs text-primary-400 mb-1">PASS CODE</div>
+                                    <div className="text-2xl font-bold tracking-widest text-primary-500">{invite.passCode}</div>
+                                </div>
+                            )}
+
+                            {invite.status === 'valid' && (
+                                <div className="flex gap-2">
+                                    <button className="btn btn-ghost btn-sm flex-1">
+                                        <Share2 size={14} />
+                                        Share
+                                    </button>
+                                    <button
+                                        className="btn btn-danger btn-sm"
+                                        onClick={() => handleCancelInvite(invite.id)}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <Modal
+                isOpen={showAddInvite}
+                onClose={() => setShowAddInvite(false)}
+                title="Create Visitor Pass"
+            >
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Visitor Name</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                            placeholder="Full name"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Contact Number</label>
+                        <input
+                            type="tel"
+                            className="form-control"
+                            value={formData.contactNumber}
+                            onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                            required
+                            placeholder="10-digit mobile"
+                        />
+                    </div>
+                    <div className="grid-2">
+                        <div className="form-group">
+                            <label>Expected Date</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={formData.expectedDate}
+                                onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Guest Type</label>
+                            <select
+                                className="form-control"
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            >
+                                <option value="guest">Guest / Relative</option>
+                                <option value="delivery">Delivery</option>
+                                <option value="service">Service Provider</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Purpose of Visit</label>
+                        <textarea
+                            className="form-control"
+                            value={formData.purpose}
+                            onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                            placeholder="e.g. Dinner, Repair works, etc."
+                        />
+                    </div>
+                    <div className="flex gap-3 justify-end mt-6">
+                        <button type="button" className="btn btn-ghost" onClick={() => setShowAddInvite(false)}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary">
+                            Generate Pass
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+        </div>
+    );
+};
+
+// Notice Board component (to be used by all dashboards)
+const NoticeBoardPage = () => {
+    return (
+        <div>
+            <h2 className="mb-6">Society Notice Board</h2>
+            <NoticeBoard />
         </div>
     );
 };

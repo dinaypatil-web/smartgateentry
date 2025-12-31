@@ -15,6 +15,8 @@ export const DataProvider = ({ children }) => {
     const [users, setUsers] = useState([]);
     const [societies, setSocieties] = useState([]);
     const [visitors, setVisitors] = useState([]);
+    const [notices, setNotices] = useState([]);
+    const [preApprovals, setPreApprovals] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Load data from localStorage on mount
@@ -27,6 +29,8 @@ export const DataProvider = ({ children }) => {
         setUsers(storage.getUsers());
         setSocieties(storage.getSocieties());
         setVisitors(storage.getVisitors());
+        setNotices(storage.getNotices());
+        setPreApprovals(storage.getPreApprovals());
     };
 
     // User operations
@@ -112,12 +116,55 @@ export const DataProvider = ({ children }) => {
 
     const getVisitorById = (id) => storage.getVisitorById(id);
 
-    const getVisitorsBySociety = (societyId) => {
-        return visitors.filter(v => v.societyId === societyId);
-    };
-
     const getVisitorsByResident = (residentId) => {
         return visitors.filter(v => v.residentId === residentId);
+    };
+
+    // Notice operations
+    const addNotice = (noticeData) => {
+        const notice = {
+            id: storage.generateId(),
+            ...noticeData,
+            createdAt: new Date().toISOString()
+        };
+        storage.addNotice(notice);
+        refreshData();
+        return notice;
+    };
+
+    const deleteNotice = (id) => {
+        storage.deleteNotice(id);
+        refreshData();
+    };
+
+    const getNoticesBySociety = (societyId) => {
+        return notices.filter(n => n.societyId === societyId);
+    };
+
+    // Pre-approval operations
+    const addPreApproval = (data) => {
+        const preApproval = {
+            id: storage.generateId(),
+            ...data,
+            status: 'valid',
+            createdAt: new Date().toISOString()
+        };
+        storage.addPreApproval(preApproval);
+        refreshData();
+        return preApproval;
+    };
+
+    const updatePreApproval = (id, updates) => {
+        storage.updatePreApproval(id, updates);
+        refreshData();
+    };
+
+    const getPreApprovalsBySociety = (societyId) => {
+        return preApprovals.filter(p => p.societyId === societyId);
+    };
+
+    const getPreApprovalsByResident = (residentId) => {
+        return preApprovals.filter(p => p.residentId === residentId);
     };
 
     // Role-specific queries
@@ -195,6 +242,19 @@ export const DataProvider = ({ children }) => {
         getVisitorById,
         getVisitorsBySociety,
         getVisitorsByResident,
+
+        // Notice operations
+        addNotice,
+        deleteNotice,
+        getNoticesBySociety,
+        notices,
+
+        // Pre-approval operations
+        addPreApproval,
+        updatePreApproval,
+        getPreApprovalsBySociety,
+        getPreApprovalsByResident,
+        preApprovals,
 
         // Role-specific queries
         getSuperadmin,

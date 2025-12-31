@@ -7,9 +7,10 @@ import Sidebar from '../../components/Sidebar';
 import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
+import NoticeBoard from '../../components/NoticeBoard';
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
-    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock
+    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
@@ -23,6 +24,7 @@ const sidebarItems = [
             { path: '/security', label: 'Security Personnel', icon: Shield },
             { path: '/visitor-log', label: 'Visitor Log', icon: ClipboardList },
             { path: '/unblock-requests', label: 'Unblock Requests', icon: Unlock },
+            { path: '/notices', label: 'Notice Board', icon: Megaphone },
             { path: '/my-roles', label: 'My Roles', icon: Users }
         ]
     }
@@ -693,10 +695,97 @@ const AdminDashboard = () => {
                         <Route path="/security" element={<SecurityPage />} />
                         <Route path="/visitor-log" element={<VisitorLogPage />} />
                         <Route path="/unblock-requests" element={<UnblockRequestsPage />} />
+                        <Route path="/notices" element={<NoticesPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
                     </Routes>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// Notices Management for Admin
+const NoticesPage = () => {
+    const { currentRole } = useAuth();
+    const { addNotice } = useData();
+    const [showAddNotice, setShowAddNotice] = useState(false);
+    const [formData, setFormData] = useState({
+        title: '',
+        content: '',
+        priority: 'normal'
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        addNotice({
+            ...formData,
+            societyId: currentRole?.societyId
+        });
+        setShowAddNotice(false);
+        setFormData({ title: '', content: '', priority: 'normal' });
+    };
+
+    return (
+        <div>
+            <div className="flex-between mb-6">
+                <h2>Society Notice Board</h2>
+                <button className="btn btn-primary" onClick={() => setShowAddNotice(true)}>
+                    <Plus size={18} />
+                    Post New Notice
+                </button>
+            </div>
+
+            <NoticeBoard isAdmin={true} />
+
+            <Modal
+                isOpen={showAddNotice}
+                onClose={() => setShowAddNotice(false)}
+                title="Post New Notice"
+            >
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Notice Title</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            required
+                            placeholder="e.g. Water Supply Interruption"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Priority</label>
+                        <select
+                            className="form-control"
+                            value={formData.priority}
+                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                        >
+                            <option value="normal">Normal</option>
+                            <option value="urgent">Urgent / Important</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Content</label>
+                        <textarea
+                            className="form-control"
+                            rows="5"
+                            value={formData.content}
+                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                            required
+                            placeholder="Detail your announcement here..."
+                        />
+                    </div>
+                    <div className="flex gap-3 justify-end mt-6">
+                        <button type="button" className="btn btn-ghost" onClick={() => setShowAddNotice(false)}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn btn-primary">
+                            Post Notice
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 };

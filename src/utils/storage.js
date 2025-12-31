@@ -5,7 +5,9 @@ const STORAGE_KEYS = {
     SOCIETIES: 'sge_societies',
     VISITORS: 'sge_visitors',
     CURRENT_USER: 'sge_current_user',
-    CURRENT_ROLE: 'sge_current_role'
+    CURRENT_ROLE: 'sge_current_role',
+    NOTICES: 'sge_notices',
+    PRE_APPROVALS: 'sge_pre_approvals'
 };
 
 // Initialize default data structure
@@ -18,6 +20,12 @@ const initializeStorage = () => {
     }
     if (!localStorage.getItem(STORAGE_KEYS.VISITORS)) {
         localStorage.setItem(STORAGE_KEYS.VISITORS, JSON.stringify([]));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.NOTICES)) {
+        localStorage.setItem(STORAGE_KEYS.NOTICES, JSON.stringify([]));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.PRE_APPROVALS)) {
+        localStorage.setItem(STORAGE_KEYS.PRE_APPROVALS, JSON.stringify([]));
     }
 };
 
@@ -141,7 +149,6 @@ export const addVisitor = (visitor) => {
     visitors.push(visitor);
     return setVisitors(visitors);
 };
-
 export const updateVisitor = (id, updates) => {
     const visitors = getVisitors();
     const index = visitors.findIndex(visitor => visitor.id === id);
@@ -150,6 +157,41 @@ export const updateVisitor = (id, updates) => {
         return setVisitors(visitors);
     }
     return false;
+};
+
+// Notice operations
+export const getNotices = () => getItem(STORAGE_KEYS.NOTICES) || [];
+export const setNotices = (notices) => setItem(STORAGE_KEYS.NOTICES, notices);
+export const addNotice = (notice) => {
+    const notices = getNotices();
+    notices.push(notice);
+    return setNotices(notices);
+};
+export const deleteNotice = (id) => {
+    const notices = getNotices();
+    return setNotices(notices.filter(n => n.id !== id));
+};
+
+// Pre-approval operations
+export const getPreApprovals = () => getItem(STORAGE_KEYS.PRE_APPROVALS) || [];
+export const setPreApprovals = (preApprovals) => setItem(STORAGE_KEYS.PRE_APPROVALS, preApprovals);
+export const addPreApproval = (preApproval) => {
+    const preApprovals = getPreApprovals();
+    preApprovals.push(preApproval);
+    return setPreApprovals(preApprovals);
+};
+export const updatePreApproval = (id, updates) => {
+    const preApprovals = getPreApprovals();
+    const index = preApprovals.findIndex(p => p.id === id);
+    if (index !== -1) {
+        preApprovals[index] = { ...preApprovals[index], ...updates };
+        return setPreApprovals(preApprovals);
+    }
+    return false;
+};
+export const deletePreApproval = (id) => {
+    const preApprovals = getPreApprovals();
+    return setPreApprovals(preApprovals.filter(p => p.id !== id));
 };
 
 // Current user session

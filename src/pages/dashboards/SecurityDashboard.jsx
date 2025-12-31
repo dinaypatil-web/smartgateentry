@@ -10,8 +10,10 @@ import EmptyState from '../../components/EmptyState';
 import CameraCapture from '../../components/CameraCapture';
 import {
     LayoutDashboard, UserPlus, ClipboardList, LogOut as LogOutIcon,
-    Camera, Check, X, User, Phone, MapPin, FileText, Building2
+    Camera, Check, X, User, Phone, MapPin, FileText, Building2,
+    Ticket, Search, Megaphone
 } from 'lucide-react';
+import NoticeBoard from '../../components/NoticeBoard';
 import { formatDateTime, getInitials } from '../../utils/validators';
 
 const sidebarItems = [
@@ -20,7 +22,9 @@ const sidebarItems = [
         items: [
             { path: '', label: 'Dashboard', icon: LayoutDashboard },
             { path: '/new-visitor', label: 'New Visitor Entry', icon: UserPlus },
-            { path: '/active-visits', label: 'Active Visits', icon: ClipboardList }
+            { path: '/active-visits', label: 'Active Visits', icon: ClipboardList },
+            { path: '/verify-pass', label: 'Verify Pass', icon: Ticket },
+            { path: '/notices', label: 'Notice Board', icon: Megaphone }
         ]
     }
 ];
@@ -480,9 +484,135 @@ const SecurityDashboard = () => {
                         <Route path="/" element={<DashboardHome />} />
                         <Route path="/new-visitor" element={<NewVisitorPage />} />
                         <Route path="/active-visits" element={<ActiveVisitsPage />} />
+                        <Route path="/verify-pass" element={<VerifyPassPage />} />
+                        <Route path="/notices" element={<NoticeBoardPage />} />
                     </Routes>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// Verify Pass Page
+const VerifyPassPage = () => {
+    const { currentRole } = useAuth();
+    const { preApprovals, updatePreApproval, addVisitor, users } = useData();
+    const [passCode, setPassCode] = useState('');
+    const [result, setResult] = useState(null);
+    const [error, setError] = useState('');
+
+    const handleVerify = (e) => {
+        e.preventDefault();
+        setError('');
+        const pass = preApprovals.find(p => p.passCode === passCode && p.societyId === currentRole.societyId);
+
+        if (!pass) {
+            setError('Invalid Pass Code');
+            setResult(null);
+            return;
+        }
+
+        if (pass.status !== 'valid') {
+            setError(`This pass is ${pass.status}`);
+            setResult(null);
+            return;
+        }
+
+        // Find resident name for display
+        const resident = users.find(u => u.id === pass.residentId);
+        setResult({ ...pass, residentName: resident?.name });
+    };
+
+    const handleCheckIn = () => {
+        // Create a visitor entry based on pre-approval
+        addVisitor({
+            name: result.name,
+            contactNumber: result.contactNumber,
+            purpose: result.purpose,
+            residentId: result.residentId,
+            societyId: result.societyId,
+            status: 'approved', // Pre-approved implies auto-approval
+            entryTime: new Date().toISOString()
+        });
+
+        // Mark pre-approval as used
+        updatePreApproval(result.id, { status: 'used' });
+
+        setResult(null);
+        setPassCode('');
+        alert('Check-in successful!');
+    };
+
+    return (
+        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <h2 className="mb-6">Verify Visitor Pass</h2>
+
+            <form onSubmit={handleVerify} className="card flex gap-4 mb-8">
+                <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter 6-digit Pass Code"
+                    value={passCode}
+                    onChange={(e) => setPassCode(e.target.value)}
+                    maxLength={6}
+                    style={{ fontSize: '1.5rem', textAlign: 'center', letterSpacing: '0.5em', fontWeight: 'bold' }}
+                />
+                <button type="submit" className="btn btn-primary" style={{ padding: '0 2rem' }}>
+                    <Search size={20} />
+                    Verify
+                </button>
+            </form>
+
+            {error && (
+                <div className="alert alert-error animate-fadeIn">
+                    <X size={18} />
+                    {error}
+                </div>
+            )}
+
+            {result && (
+                <div className="card animate-slideUp">
+                    <div className="text-center mb-6">
+                        <div className="stat-icon m-auto mb-4" style={{ background: 'var(--success-100)', color: 'var(--success-600)' }}>
+                            <Ticket size={32} />
+                        </div>
+                        <h3 className="text-2xl">Valid Pass Found</h3>
+                        <p className="text-muted">Pre-approved by {result.residentName}</p>
+                    </div>
+
+                    <div className="space-y-4 mb-8">
+                        <div className="flex-between p-3 bg-glass rounded-lg">
+                            <span className="text-muted">Visitor Name</span>
+                            <span className="font-semibold">{result.name}</span>
+                        </div>
+                        <div className="flex-between p-3 bg-glass rounded-lg">
+                            <span className="text-muted">Contact</span>
+                            <span className="font-semibold">{result.contactNumber}</span>
+                        </div>
+                        <div className="flex-between p-3 bg-glass rounded-lg">
+                            <span className="text-muted">Purpose</span>
+                            <span className="font-semibold">{result.purpose}</span>
+                        </div>
+                        <div className="flex-between p-3 bg-glass rounded-lg">
+                            <span className="text-muted">Visit Date</span>
+                            <span className="font-semibold">{result.expectedDate}</span>
+                        </div>
+                    </div>
+
+                    <button className="btn btn-success w-full text-lg py-4" onClick={handleCheckIn}>
+                        Confirm Entry & Check-in
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const NoticeBoardPage = () => {
+    return (
+        <div>
+            <h2 className="mb-6">Society Announcements</h2>
+            <NoticeBoard />
         </div>
     );
 };

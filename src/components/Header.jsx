@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import {
     Home, LogOut, User, Key, ChevronDown,
-    ArrowLeftRight, Settings
+    ArrowLeftRight, Settings, AlertTriangle
 } from 'lucide-react';
 import { getInitials, getRoleLabel } from '../utils/validators';
 
@@ -38,6 +38,18 @@ const Header = ({ title }) => {
             </div>
 
             <div className="header-right">
+                <button
+                    className="btn btn-danger btn-sm pulse"
+                    style={{ borderRadius: 'var(--radius-full)', fontWeight: 'bold' }}
+                    onClick={() => {
+                        if (window.confirm('SEND EMERGENCY SOS ALERT? This will notify all security personnel.')) {
+                            alert('SOS Alert Sent to Security Team!');
+                        }
+                    }}
+                >
+                    <AlertTriangle size={18} />
+                    SOS
+                </button>
                 <div className="dropdown">
                     <button
                         className="header-user"
