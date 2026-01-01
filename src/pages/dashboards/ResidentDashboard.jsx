@@ -359,16 +359,43 @@ const PendingPage = () => {
 // Visit History
 const HistoryPage = () => {
     const { currentUser } = useAuth();
-    const { visitors, updateVisitor } = useData();
+    const { visitors, updateVisitor, refreshData } = useData();
     const [showBlockConfirm, setShowBlockConfirm] = useState(null);
+    const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+    const handleRefresh = async () => {
+        console.log('HistoryPage: Manual refresh triggered');
+        await refreshData();
+        setLastRefresh(Date.now());
+    };
 
     const myVisitors = visitors
-        .filter(v => v.residentId === currentUser?.id && v.status !== 'pending')
-        .sort((a, b) => new Date(b.entryTime) - new Date(a.entryTime));
+        .filter(v => {
+            // Handle both camelCase and lowercase field names
+            const visitorResidentId = v.residentId || v.residentid;
+            console.log('HistoryPage: Filtering visitor:', v, 'residentId match:', visitorResidentId === currentUser?.id);
+            return visitorResidentId === currentUser?.id && v.status !== 'pending';
+        })
+        .sort((a, b) => {
+            // Handle both camelCase and lowercase field names for entryTime
+            const aEntryTime = a.entryTime || a.entrytime;
+            const bEntryTime = b.entryTime || b.entrytime;
+            return new Date(bEntryTime) - new Date(aEntryTime);
+        });
 
     return (
         <div>
-            <h2 className="mb-6">Visit History</h2>
+            <div className="flex-between mb-6">
+                <h2>Visit History</h2>
+                <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={handleRefresh}
+                    title="Last refreshed: {new Date(lastRefresh).toLocaleTimeString()}"
+                >
+                    <Calendar size={16} />
+                    Refresh
+                </button>
+            </div>
 
             {myVisitors.length === 0 ? (
                 <EmptyState
@@ -408,14 +435,14 @@ const HistoryPage = () => {
                                                 )}
                                                 <div>
                                                     <div className="font-medium">{visitor.name}</div>
-                                                    <div className="text-xs text-muted">{visitor.contactNumber}</div>
+                                                    <div className="text-xs text-muted">{visitor.contactNumber || visitor.contactnumber || 'Not provided'}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="text-muted">{visitor.purpose}</td>
-                                        <td className="text-sm text-muted">{formatDateTime(visitor.entryTime)}</td>
+                                        <td className="text-muted">{visitor.purpose || 'Not provided'}</td>
+                                        <td className="text-sm text-muted">{formatDateTime(visitor.entryTime || visitor.entrytime)}</td>
                                         <td className="text-sm text-muted">
-                                            {visitor.exitTime ? formatDateTime(visitor.exitTime) : '—'}
+                                            {visitor.exitTime || visitor.exittime ? formatDateTime(visitor.exitTime || visitor.exittime) : '—'}
                                         </td>
                                         <td>
                                             <StatusBadge status={visitor.status} />
