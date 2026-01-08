@@ -450,6 +450,7 @@ export const DataProvider = ({ children }) => {
         updateUser,
         deleteUserById,
         getUserById,
+        getUserByEmail,
         getUserByLoginName,
 
         // Society operations
