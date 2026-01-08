@@ -8,6 +8,7 @@ import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import NoticeBoard from '../../components/NoticeBoard';
+import NoticeForm from '../../components/NoticeForm'; // Added NoticeForm import
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
     Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone
@@ -754,50 +755,12 @@ const NoticesPage = () => {
                 isOpen={showAddNotice}
                 onClose={() => setShowAddNotice(false)}
                 title="Post New Notice"
+                size="xl"
             >
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Notice Title</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            required
-                            placeholder="e.g. Water Supply Interruption"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Priority</label>
-                        <select
-                            className="form-control"
-                            value={formData.priority}
-                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                        >
-                            <option value="normal">Normal</option>
-                            <option value="urgent">Urgent / Important</option>
-                        </select>
-                    </div>
-                    <div className="form-group">
-                        <label>Content</label>
-                        <textarea
-                            className="form-control"
-                            rows="5"
-                            value={formData.content}
-                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                            required
-                            placeholder="Detail your announcement here..."
-                        />
-                    </div>
-                    <div className="flex gap-3 justify-end mt-6">
-                        <button type="button" className="btn btn-ghost" onClick={() => setShowAddNotice(false)}>
-                            Cancel
-                        </button>
-                        <button type="submit" className="btn btn-primary">
-                            Post Notice
-                        </button>
-                    </div>
-                </form>
+                <NoticeForm
+                    onSubmit={handleSubmit}
+                    onCancel={() => setShowAddNotice(false)}
+                />
             </Modal>
         </div>
     );

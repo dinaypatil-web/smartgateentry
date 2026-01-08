@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
+import NoticeForm from '../../components/NoticeForm';
+import InviteForm from '../../components/InviteForm';
 
 const sidebarItems = [
     {
@@ -717,72 +719,12 @@ const InvitesPage = () => {
                 isOpen={showAddInvite}
                 onClose={() => setShowAddInvite(false)}
                 title="Create Visitor Pass"
+                size="xl"
             >
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Visitor Name</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                            placeholder="Full name"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Contact Number</label>
-                        <input
-                            type="tel"
-                            className="form-control"
-                            value={formData.contactNumber}
-                            onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                            required
-                            placeholder="10-digit mobile"
-                        />
-                    </div>
-                    <div className="grid-2">
-                        <div className="form-group">
-                            <label>Expected Date</label>
-                            <input
-                                type="date"
-                                className="form-control"
-                                value={formData.expectedDate}
-                                onChange={(e) => setFormData({ ...formData, expectedDate: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Guest Type</label>
-                            <select
-                                className="form-control"
-                                value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                            >
-                                <option value="guest">Guest / Relative</option>
-                                <option value="delivery">Delivery</option>
-                                <option value="service">Service Provider</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="form-group">
-                        <label>Purpose of Visit</label>
-                        <textarea
-                            className="form-control"
-                            value={formData.purpose}
-                            onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                            placeholder="e.g. Dinner, Repair works, etc."
-                        />
-                    </div>
-                    <div className="flex gap-3 justify-end mt-6">
-                        <button type="button" className="btn btn-ghost" onClick={() => setShowAddInvite(false)}>
-                            Cancel
-                        </button>
-                        <button type="submit" className="btn btn-primary">
-                            Generate Pass
-                        </button>
-                    </div>
-                </form>
+                <InviteForm
+                    onSubmit={handleSubmit}
+                    onCancel={() => setShowAddInvite(false)}
+                />
             </Modal>
         </div>
     );
