@@ -31,6 +31,30 @@ export const DataProvider = ({ children }) => {
     // Load data on mount - use async API if Firebase is configured
     useEffect(() => {
         refreshData();
+
+        // Subscribe to SOS alerts for real-time notification
+        const unsubscribeSOS = storageApi.subscribeToCollection('sos_alerts', (data) => {
+            console.log('DataContext: Real-time SOS update received', data?.length);
+            setSosAlerts(data);
+        });
+
+        // Subscribe to visitors for real-time entry/exit tracking
+        const unsubscribeVisitors = storageApi.subscribeToCollection('visitors', (data) => {
+            console.log('DataContext: Real-time visitors update received', data?.length);
+            setVisitors(data);
+        });
+
+        // Subscribe to notices for instant updates
+        const unsubscribeNotices = storageApi.subscribeToCollection('notices', (data) => {
+            console.log('DataContext: Real-time notices update received', data?.length);
+            setNotices(data);
+        });
+
+        return () => {
+            if (unsubscribeSOS) unsubscribeSOS();
+            if (unsubscribeVisitors) unsubscribeVisitors();
+            if (unsubscribeNotices) unsubscribeNotices();
+        };
     }, []);
 
     const refreshData = async () => {

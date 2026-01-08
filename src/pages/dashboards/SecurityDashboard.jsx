@@ -538,10 +538,41 @@ const SOSAlertOverlay = () => {
     const { currentRole, currentUser } = useAuth();
     const { sosAlerts, users, resolveSOS } = useData();
 
-    const activeAlerts = sosAlerts.filter(a =>
-        (a.societyId === currentRole?.societyId || a.societyid === currentRole?.societyId) &&
-        a.status === 'active'
-    );
+    const activeAlerts = sosAlerts.filter(a => {
+        const societyId = a.societyId || a.societyid;
+        return societyId === currentRole?.societyId && a.status === 'active';
+    });
+
+    // Sound effect for SOS
+    useEffect(() => {
+        if (activeAlerts.length > 0) {
+            console.log('SOSAlertOverlay: Active alerts detected, starting siren');
+            const playSiren = () => {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+                oscillator.frequency.linearRampToValueAtTime(440, audioCtx.currentTime + 1.0);
+
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.8);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 1.0);
+            };
+
+            playSiren();
+            const interval = setInterval(playSiren, 1500);
+            return () => clearInterval(interval);
+        }
+    }, [activeAlerts.length]);
 
     if (activeAlerts.length === 0) return null;
 

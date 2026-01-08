@@ -149,3 +149,8 @@ alter table documents add column if not exists title text;
 alter table documents add column if not exists category text; -- Bye-laws, Circulars, Rules
 alter table documents add column if not exists url text;
 alter table documents add column if not exists createdat text;
+
+-- Enable Supabase Realtime for SOS
+alter publication supabase_realtime add table sos_alerts;
+alter publication supabase_realtime add table visitors;
+alter publication supabase_realtime add table notices;

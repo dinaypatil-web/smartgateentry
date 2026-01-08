@@ -221,3 +221,11 @@ export const generateId = () => localStorage.generateId();
 // Check if using online storage
 export const isUsingOnlineStorage = () => USE_ONLINE_STORAGE;
 
+// Real-time subscriptions
+export const subscribeToCollection = (collection, callback) => {
+    if (USE_ONLINE_STORAGE) {
+        return api.subscribeToCollection(collection, callback);
+    }
+    return () => { }; // No-op for local storage
+};
+
