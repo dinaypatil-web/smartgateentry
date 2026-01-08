@@ -251,7 +251,7 @@ export const getSocieties = async () => {
     try {
         const { data, error } = await supabase.from(COLLECTIONS.SOCIETIES).select('*');
         if (error) throw error;
-        return data;
+        return fromDb(data);
     } catch (error) {
         console.error('Error getting societies:', error);
         return [];
@@ -266,7 +266,7 @@ export const getSocietyById = async (id) => {
             .eq('id', id)
             .single();
         if (error) return null;
-        return data;
+        return fromDb(data);
     } catch (error) {
         console.error('Error getting society:', error);
         return null;
