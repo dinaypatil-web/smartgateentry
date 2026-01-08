@@ -6,7 +6,7 @@ const COLLECTIONS = {
     SOCIETIES: 'societies',
     VISITORS: 'visitors',
     NOTICES: 'notices',
-    PRE_APPROVALS: 'preApprovals',
+    PRE_APPROVALS: 'preapprovals',
     VEHICLES: 'vehicles',
     COMPLAINTS: 'complaints',
     AMENITIES: 'amenities',
@@ -72,7 +72,7 @@ const fromDb = (data) => {
         'idProof', 'comingFrom', 'contactNumber', 'residentId', 'societyId', 'entryTime', 'exitTime',
         'visitorName', 'expectedDate', 'passCode', 'isResigned', 'unblockRequestedBy',
         'securityQuestion', 'securityAnswer', 'unblockRequestedDate', 'blockedBy', 'blockedDate',
-        'plateNumber', 'assignedTo', 'amenityId', 'isGateAllowed', 'flatNo',
+        'plateNumber', 'assignedTo', 'amenityId', 'isGateAllowed', 'flatNo', 'flatNumber',
         'resolvedBy'
     ];
 
@@ -152,43 +152,19 @@ export const getSocietyByIdSync = async (id) => {
 
 export const getUserByLoginName = async (loginName) => {
     try {
+        console.log('Supabase API: Getting user by login name:', loginName);
         const { data, error } = await supabase
-            .from(COLLECTIONS.USERS)
-            .select('*')
-            .eq('loginName', loginName.toLowerCase()) // Note: loginName might need to be loginname if table has lowercase
-            .or(`loginname.eq.${loginName.toLowerCase()},loginName.eq.${loginName.toLowerCase()}`) // Try both to be safe?
-            .single();
-
-        // Simplified query assuming one schema or the other
-        // Let's first try standard query. If it fails, we might need more complex logic.
-        // But for 'eq', we need the exact column name.
-        // Let's assume lowercase for safety if mapped.
-
-        // Actually, we can't easily guess the column name for .eq() without mapping.
-        // But let's try to query assuming the DB has lowercase columns if the previous operations failed.
-        // For now, I will stick to what's likely in the DB: lowercase if unquoted.
-
-        // However, we can't change the .eq() key dynamically easily.
-        // Let's try to use the most likely one: 'loginname' (lowercase)
-
-        const { data: d1, error: e1 } = await supabase
             .from(COLLECTIONS.USERS)
             .select('*')
             .eq('loginname', loginName.toLowerCase())
             .single();
 
-        if (!e1) return fromDb(d1);
+        if (error) {
+            console.error('Supabase API: User not found or error:', error.message);
+            return null;
+        }
 
-        // If that failed, maybe it IS mixed case?
-        const { data: d2, error: e2 } = await supabase
-            .from(COLLECTIONS.USERS)
-            .select('*')
-            .eq('loginName', loginName.toLowerCase())
-            .single();
-
-        if (!e2) return fromDb(d2);
-
-        return null;
+        return fromDb(data);
     } catch (error) {
         console.error('Error getting user by login name:', error);
         return null;
