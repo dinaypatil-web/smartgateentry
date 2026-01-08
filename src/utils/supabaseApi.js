@@ -6,7 +6,15 @@ const COLLECTIONS = {
     SOCIETIES: 'societies',
     VISITORS: 'visitors',
     NOTICES: 'notices',
-    PRE_APPROVALS: 'preApprovals'
+    PRE_APPROVALS: 'preApprovals',
+    VEHICLES: 'vehicles',
+    COMPLAINTS: 'complaints',
+    AMENITIES: 'amenities',
+    BOOKINGS: 'bookings',
+    STAFF: 'staff',
+    PAYMENTS: 'payments',
+    SOS_ALERTS: 'sos_alerts',
+    DOCUMENTS: 'documents'
 };
 
 export const generateId = () => {
@@ -36,6 +44,14 @@ const toDb = (data) => {
             mapped['entrytime'] = data[key];
         } else if (key === 'exitTime') {
             mapped['exittime'] = data[key];
+        } else if (key === 'plateNumber') {
+            mapped['platenumber'] = data[key];
+        } else if (key === 'assignedTo') {
+            mapped['assignedto'] = data[key];
+        } else if (key === 'amenityId') {
+            mapped['amenityid'] = data[key];
+        } else if (key === 'isGateAllowed') {
+            mapped['isgateallowed'] = data[key];
         } else {
             // Default: convert to lowercase
             mapped[key.toLowerCase()] = data[key];
@@ -48,28 +64,30 @@ const toDb = (data) => {
 // Helper to map lowercase DB keys back to camelCase for App
 const fromDb = (data) => {
     if (!data) return data;
-    
+
     // Known camelCase keys in app
     const camelKeys = [
         'loginName', 'loginPassword', 'createdAt', 'createdBy',
         'permissionFromDate', 'permissionToDate',
         'idProof', 'comingFrom', 'contactNumber', 'residentId', 'societyId', 'entryTime', 'exitTime',
         'visitorName', 'expectedDate', 'passCode', 'isResigned', 'unblockRequestedBy',
-        'securityQuestion', 'securityAnswer', 'unblockRequestedDate', 'blockedBy', 'blockedDate'
+        'securityQuestion', 'securityAnswer', 'unblockRequestedDate', 'blockedBy', 'blockedDate',
+        'plateNumber', 'assignedTo', 'amenityId', 'isGateAllowed', 'flatNo',
+        'resolvedBy'
     ];
-    
+
     // If it's an array, map each item
     if (Array.isArray(data)) {
         return data.map(item => fromDb(item));
     }
-    
+
     const mapped = { ...data };
-    
+
     // Check if we have lowercase versions of camelKeys and map them back
     camelKeys.forEach(key => {
         const lowerKey = key.toLowerCase();
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        
+
         // Priority: camelCase -> lowercase -> snake_case
         if (mapped[key] === undefined) {
             if (mapped[lowerKey] !== undefined) {
@@ -81,7 +99,7 @@ const fromDb = (data) => {
             }
         }
     });
-    
+
     console.log('Supabase API: Mapping DB data back to camelCase:', mapped);
     return mapped;
 };
@@ -140,36 +158,36 @@ export const getUserByLoginName = async (loginName) => {
             .eq('loginName', loginName.toLowerCase()) // Note: loginName might need to be loginname if table has lowercase
             .or(`loginname.eq.${loginName.toLowerCase()},loginName.eq.${loginName.toLowerCase()}`) // Try both to be safe?
             .single();
-            
+
         // Simplified query assuming one schema or the other
         // Let's first try standard query. If it fails, we might need more complex logic.
         // But for 'eq', we need the exact column name.
         // Let's assume lowercase for safety if mapped.
-        
+
         // Actually, we can't easily guess the column name for .eq() without mapping.
         // But let's try to query assuming the DB has lowercase columns if the previous operations failed.
         // For now, I will stick to what's likely in the DB: lowercase if unquoted.
-        
+
         // However, we can't change the .eq() key dynamically easily.
         // Let's try to use the most likely one: 'loginname' (lowercase)
-        
+
         const { data: d1, error: e1 } = await supabase
-             .from(COLLECTIONS.USERS)
-             .select('*')
-             .eq('loginname', loginName.toLowerCase())
-             .single();
-             
+            .from(COLLECTIONS.USERS)
+            .select('*')
+            .eq('loginname', loginName.toLowerCase())
+            .single();
+
         if (!e1) return fromDb(d1);
-        
+
         // If that failed, maybe it IS mixed case?
         const { data: d2, error: e2 } = await supabase
-             .from(COLLECTIONS.USERS)
-             .select('*')
-             .eq('loginName', loginName.toLowerCase())
-             .single();
-             
+            .from(COLLECTIONS.USERS)
+            .select('*')
+            .eq('loginName', loginName.toLowerCase())
+            .single();
+
         if (!e2) return fromDb(d2);
-        
+
         return null;
     } catch (error) {
         console.error('Error getting user by login name:', error);
@@ -183,9 +201,9 @@ export const addUser = async (userData) => {
             ...userData,
             createdAt: userData.createdAt || new Date().toISOString()
         };
-        
+
         const dbData = toDb(userWithId);
-        
+
         const { data, error } = await supabase
             .from(COLLECTIONS.USERS)
             .insert(dbData)
@@ -338,18 +356,18 @@ export const checkTableStructure = async (tableName) => {
             .from(tableName)
             .select('*')
             .limit(1);
-            
+
         if (error) {
             console.error(`Error checking table ${tableName}:`, error);
             return null;
         }
-        
+
         if (data && data.length > 0) {
             const columns = Object.keys(data[0]);
             console.log(`Available columns in ${tableName}:`, columns);
             return columns;
         }
-        
+
         return null;
     } catch (error) {
         console.error(`Error checking table structure for ${tableName}:`, error);
@@ -360,22 +378,22 @@ export const checkTableStructure = async (tableName) => {
 export const addVisitor = async (visitorData) => {
     try {
         console.log('Supabase: Adding visitor:', visitorData);
-        
+
         // Critical: Ensure residentId is preserved
         if (!visitorData.residentId) {
             throw new Error('residentId is required for visitor creation');
         }
-        
+
         // Check table structure first
         const availableColumns = await checkTableStructure(COLLECTIONS.VISITORS);
-        
+
         const visitorWithId = {
             ...visitorData,
             status: 'pending',
             entryTime: new Date().toISOString(),
             exitTime: null
         };
-        
+
         // Create data object with only available columns
         let dbData = {};
         if (availableColumns) {
@@ -383,9 +401,9 @@ export const addVisitor = async (visitorData) => {
             Object.keys(visitorWithId).forEach(key => {
                 const lowerKey = key.toLowerCase();
                 const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-                
-                if (availableColumns.includes(key) || 
-                    availableColumns.includes(lowerKey) || 
+
+                if (availableColumns.includes(key) ||
+                    availableColumns.includes(lowerKey) ||
                     availableColumns.includes(snakeKey)) {
                     dbData[lowerKey] = visitorWithId[key];
                 }
@@ -397,23 +415,23 @@ export const addVisitor = async (visitorData) => {
             dbData = toDb(dataWithoutCreatedBy);
             console.log('Supabase: Using fallback mapping (without createdBy):', dbData);
         }
-        
+
         // Critical verification: Ensure residentid is included
         if (!dbData.residentid && visitorWithId.residentId) {
             dbData.residentid = visitorWithId.residentId;
             console.log('Supabase: Force-added residentid:', visitorWithId.residentId);
         }
-        
+
         let { data, error } = await supabase
             .from(COLLECTIONS.VISITORS)
             .insert(dbData)
             .select()
             .single();
-            
+
         // If first attempt fails, try with minimal required fields only
         if (error && (error.message.includes('column') || error.message.includes('does not exist'))) {
             console.log('Supabase: First attempt failed, trying minimal data...');
-            
+
             const minimalData = {
                 id: visitorWithId.id,
                 name: visitorWithId.name,
@@ -422,23 +440,23 @@ export const addVisitor = async (visitorData) => {
                 societyid: visitorWithId.societyId,
                 residentid: visitorWithId.residentId // Critical field
             };
-            
+
             dbData = minimalData;
             console.log('Supabase: Minimal data attempt:', dbData);
-            
+
             const result = await supabase
                 .from(COLLECTIONS.VISITORS)
                 .insert(dbData)
                 .select()
                 .single();
-                
+
             data = result.data;
             error = result.error;
         }
-            
+
         if (error) {
             console.error('Supabase: Database error:', error);
-            
+
             // Handle specific column errors
             if (error.message.includes('column') && error.message.includes('does not exist')) {
                 throw new Error(`Database schema error: ${error.message}. Available columns: ${availableColumns ? availableColumns.join(', ') : 'unknown'}`);
@@ -452,7 +470,7 @@ export const addVisitor = async (visitorData) => {
                 throw new Error(`Database error: ${error.message}`);
             }
         }
-        
+
         console.log('Supabase: Visitor added successfully:', data);
         return fromDb(data);
     } catch (error) {
@@ -570,12 +588,79 @@ export const updatePreApproval = async (id, updates) => {
     }
 };
 
+// ===== GENERIC CRUD OPERATIONS =====
+
+export const getData = async (collection) => {
+    try {
+        const { data, error } = await supabase
+            .from(collection)
+            .select('*');
+        if (error) throw error;
+        return fromDb(data);
+    } catch (error) {
+        console.error(`Error fetching from ${collection}:`, error);
+        throw error;
+    }
+};
+
+export const addData = async (collection, itemData) => {
+    try {
+        const dbData = {
+            id: generateId(),
+            createdAt: new Date().toISOString(),
+            ...itemData
+        };
+        const mapped = toDb(dbData);
+        const { data, error } = await supabase
+            .from(collection)
+            .insert(mapped)
+            .select()
+            .single();
+        if (error) throw error;
+        return fromDb(data);
+    } catch (error) {
+        console.error(`Error adding to ${collection}:`, error);
+        throw error;
+    }
+};
+
+export const updateData = async (collection, id, updates) => {
+    try {
+        const dbUpdates = toDb(updates);
+        const { data, error } = await supabase
+            .from(collection)
+            .update(dbUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return fromDb(data);
+    } catch (error) {
+        console.error(`Error updating ${collection}:`, error);
+        throw error;
+    }
+};
+
+export const deleteData = async (collection, id) => {
+    try {
+        const { error } = await supabase
+            .from(collection)
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error(`Error deleting from ${collection}:`, error);
+        throw error;
+    }
+};
+
 // ===== REAL-TIME SUBSCRIPTIONS =====
 export const subscribeToCollection = (collectionName, callback) => {
     // Note: Supabase Realtime returns changes, not the full dataset.
     // This simple implementation listens for any change and re-fetches the whole list.
     // This is less efficient but matches the behavior expected by the callback (receiving full list).
-    
+
     const fetchAndCallback = async () => {
         const { data } = await supabase.from(collectionName).select('*');
         if (data) callback(fromDb(data));
@@ -587,7 +672,7 @@ export const subscribeToCollection = (collectionName, callback) => {
             fetchAndCallback();
         })
         .subscribe();
-    
+
     // Initial fetch
     fetchAndCallback();
 

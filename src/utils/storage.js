@@ -7,7 +7,13 @@ const STORAGE_KEYS = {
     CURRENT_USER: 'sge_current_user',
     CURRENT_ROLE: 'sge_current_role',
     NOTICES: 'sge_notices',
-    PRE_APPROVALS: 'sge_pre_approvals'
+    PRE_APPROVALS: 'sge_pre_approvals',
+    VEHICLES: 'sge_vehicles',
+    COMPLAINTS: 'sge_complaints',
+    AMENITIES: 'sge_amenities',
+    BOOKINGS: 'sge_bookings',
+    STAFF: 'sge_staff',
+    PAYMENTS: 'sge_payments'
 };
 
 // Initialize default data structure
@@ -27,6 +33,12 @@ const initializeStorage = () => {
     if (!localStorage.getItem(STORAGE_KEYS.PRE_APPROVALS)) {
         setItem(STORAGE_KEYS.PRE_APPROVALS, []);
     }
+    if (!localStorage.getItem(STORAGE_KEYS.VEHICLES)) { setItem(STORAGE_KEYS.VEHICLES, []); }
+    if (!localStorage.getItem(STORAGE_KEYS.COMPLAINTS)) { setItem(STORAGE_KEYS.COMPLAINTS, []); }
+    if (!localStorage.getItem(STORAGE_KEYS.AMENITIES)) { setItem(STORAGE_KEYS.AMENITIES, []); }
+    if (!localStorage.getItem(STORAGE_KEYS.BOOKINGS)) { setItem(STORAGE_KEYS.BOOKINGS, []); }
+    if (!localStorage.getItem(STORAGE_KEYS.STAFF)) { setItem(STORAGE_KEYS.STAFF, []); }
+    if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) { setItem(STORAGE_KEYS.PAYMENTS, []); }
 };
 
 // Generic storage operations
@@ -60,18 +72,18 @@ const getItem = (key) => {
 const setItem = (key, value) => {
     try {
         console.log(`Storage: Setting item for key: ${key}`);
-        
+
         // Check localStorage quota
         const storageUsage = JSON.stringify(localStorage).length;
         const storageLimit = 5 * 1024 * 1024; // 5MB typical limit
         console.log(`Storage: Current usage: ${storageUsage} bytes, Limit: ${storageLimit} bytes`);
-        
+
         if (storageUsage > storageLimit * 0.9) {
             console.warn('Storage: Approaching localStorage limit');
             // Try to clear some old data or notify user
             throw new Error('Storage quota exceeded. Please clear browser data.');
         }
-        
+
         const encrypted = encryption.encrypt(value);
         if (encrypted) {
             localStorage.setItem(key, encrypted);
@@ -83,7 +95,7 @@ const setItem = (key, value) => {
         }
     } catch (error) {
         console.error(`Error writing ${key} to localStorage:`, error);
-        
+
         if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
             throw new Error('Storage quota exceeded. Please clear browser cache and try again.');
         } else if (error.message.includes('SecurityError')) {
@@ -247,6 +259,54 @@ export const deletePreApproval = (id) => {
     return setPreApprovals(preApprovals.filter(p => p.id !== id));
 };
 
+// Generic CRUD fallbacks for localStorage
+const getCollectionKey = (collection) => {
+    const map = {
+        'vehicles': STORAGE_KEYS.VEHICLES,
+        'complaints': STORAGE_KEYS.COMPLAINTS,
+        'amenities': STORAGE_KEYS.AMENITIES,
+        'bookings': STORAGE_KEYS.BOOKINGS,
+        'staff': STORAGE_KEYS.STAFF,
+        'payments': STORAGE_KEYS.PAYMENTS
+    };
+    return map[collection];
+};
+
+export const getData = (collection) => {
+    const key = getCollectionKey(collection);
+    return key ? getItem(key) || [] : [];
+};
+
+export const addData = (collection, data) => {
+    const key = getCollectionKey(collection);
+    if (!key) return false;
+    const items = getItem(key) || [];
+    const newItem = { id: generateId(), createdAt: new Date().toISOString(), ...data };
+    items.push(newItem);
+    return setItem(key, items) ? newItem : false;
+};
+
+export const updateData = (collection, id, updates) => {
+    const key = getCollectionKey(collection);
+    if (!key) return false;
+    const items = getItem(key) || [];
+    const index = items.findIndex(i => i.id === id);
+    if (index !== -1) {
+        items[index] = { ...items[index], ...updates };
+        setItem(key, items);
+        return items[index];
+    }
+    return false;
+};
+
+export const deleteData = (collection, id) => {
+    const key = getCollectionKey(collection);
+    if (!key) return false;
+    const items = getItem(key) || [];
+    const filtered = items.filter(i => i.id !== id);
+    return setItem(key, filtered);
+};
+
 // Current user session
 export const getCurrentUser = () => getItem(STORAGE_KEYS.CURRENT_USER);
 
@@ -315,7 +375,7 @@ export const createBackup = () => {
 export const exportBackupToFile = (backup = null, filename = null) => {
     try {
         const backupData = backup || createBackup();
-        
+
         // Create filename with timestamp if not provided
         if (!filename) {
             const date = new Date();
@@ -325,7 +385,7 @@ export const exportBackupToFile = (backup = null, filename = null) => {
 
         // Convert to JSON string
         const jsonString = JSON.stringify(backupData, null, 2);
-        
+
         // Create blob and download
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -336,7 +396,7 @@ export const exportBackupToFile = (backup = null, filename = null) => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
+
         return { success: true, filename };
     } catch (error) {
         console.error('Error exporting backup:', error);
@@ -364,7 +424,7 @@ export const validateBackupData = (backupData) => {
 
     const { data } = backupData;
     const requiredKeys = ['users', 'societies', 'visitors', 'notices', 'preApprovals'];
-    
+
     for (const key of requiredKeys) {
         if (!(key in data)) {
             errors.push(`Missing required data key: ${key}`);
@@ -431,7 +491,7 @@ export const restoreFromBackup = (backupData, createAutoBackup = true) => {
 
         // Restore data
         const { data } = backupData;
-        
+
         // Clear existing data and restore
         setUsers(data.users || []);
         setSocieties(data.societies || []);
@@ -471,12 +531,12 @@ export const importBackupFromFile = async (file) => {
             }
 
             const reader = new FileReader();
-            
+
             reader.onload = (e) => {
                 try {
                     const backupData = JSON.parse(e.target.result);
                     const validation = validateBackupData(backupData);
-                    
+
                     if (!validation.valid) {
                         resolve({
                             success: false,
@@ -523,7 +583,7 @@ export const getAutoBackup = () => {
     try {
         const autoBackupJson = localStorage.getItem('sge_last_auto_backup');
         const autoBackupTime = localStorage.getItem('sge_last_auto_backup_time');
-        
+
         if (autoBackupJson) {
             return {
                 data: JSON.parse(autoBackupJson),

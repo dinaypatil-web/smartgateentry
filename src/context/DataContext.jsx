@@ -18,6 +18,14 @@ export const DataProvider = ({ children }) => {
     const [visitors, setVisitors] = useState([]);
     const [notices, setNotices] = useState([]);
     const [preApprovals, setPreApprovals] = useState([]);
+    const [vehicles, setVehicles] = useState([]);
+    const [complaints, setComplaints] = useState([]);
+    const [amenities, setAmenities] = useState([]);
+    const [bookings, setBookings] = useState([]);
+    const [staff, setStaff] = useState([]);
+    const [payments, setPayments] = useState([]);
+    const [sosAlerts, setSosAlerts] = useState([]);
+    const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Load data on mount - use async API if Firebase is configured
@@ -32,12 +40,23 @@ export const DataProvider = ({ children }) => {
             if (storageApi.isUsingOnlineStorage()) {
                 // Use async API calls for online storage
                 console.log('DataContext: Using online storage for refresh');
-                const [usersData, societiesData, visitorsData, noticesData, preApprovalsData] = await Promise.all([
+                const [
+                    usersData, societiesData, visitorsData, noticesData, preApprovalsData,
+                    vehiclesData, complaintsData, amenitiesData, bookingsData, staffData, paymentsData, sosData, documentsData
+                ] = await Promise.all([
                     storageApi.getUsers(),
                     storageApi.getSocieties(),
                     storageApi.getVisitors(),
                     storageApi.getNotices(),
-                    storageApi.getPreApprovals()
+                    storageApi.getPreApprovals(),
+                    storageApi.getVehicles(),
+                    storageApi.getComplaints(),
+                    storageApi.getAmenities(),
+                    storageApi.getBookings(),
+                    storageApi.getStaff(),
+                    storageApi.getPayments(),
+                    storageApi.getData('sos_alerts'),
+                    storageApi.getData('documents')
                 ]);
                 console.log('DataContext: Refreshed data - Visitors:', visitorsData?.length, 'Users:', usersData?.length);
                 setUsers(usersData);
@@ -45,6 +64,14 @@ export const DataProvider = ({ children }) => {
                 setVisitors(visitorsData);
                 setNotices(noticesData);
                 setPreApprovals(preApprovalsData);
+                setVehicles(vehiclesData);
+                setComplaints(complaintsData);
+                setAmenities(amenitiesData);
+                setBookings(bookingsData);
+                setStaff(staffData);
+                setPayments(paymentsData);
+                setSosAlerts(sosData);
+                setDocuments(documentsData);
             } else {
                 // Use synchronous localStorage calls
                 console.log('DataContext: Using local storage for refresh');
@@ -53,6 +80,14 @@ export const DataProvider = ({ children }) => {
                 setVisitors(storage.getVisitors());
                 setNotices(storage.getNotices());
                 setPreApprovals(storage.getPreApprovals());
+                setVehicles(storage.getVehicles());
+                setComplaints(storage.getComplaints());
+                setAmenities(storage.getAmenities());
+                setBookings(storage.getBookings());
+                setStaff(storage.getStaff());
+                setPayments(storage.getPayments());
+                setSosAlerts(storage.getData('sos_alerts'));
+                setDocuments(storage.getData('documents') || []);
             }
         } catch (error) {
             console.error('Error refreshing data:', error);
@@ -102,14 +137,14 @@ export const DataProvider = ({ children }) => {
         }
         return storage.getUserById(id);
     };
-    
+
     const getUserByEmail = async (email) => {
         if (storageApi.isUsingOnlineStorage()) {
             return await storageApi.getUserByEmail(email);
         }
         return storage.getUserByEmail(email);
     };
-    
+
     const getUserByLoginName = async (loginName) => {
         if (storageApi.isUsingOnlineStorage()) {
             return await storageApi.getUserByLoginName(loginName);
@@ -180,7 +215,7 @@ export const DataProvider = ({ children }) => {
     const addVisitor = async (visitorData) => {
         try {
             console.log('DataContext: Adding visitor:', visitorData);
-            
+
             const visitor = {
                 id: storage.generateId(),
                 ...visitorData,
@@ -188,9 +223,9 @@ export const DataProvider = ({ children }) => {
                 entryTime: new Date().toISOString(),
                 exitTime: null
             };
-            
+
             console.log('DataContext: Prepared visitor object:', visitor);
-            
+
             if (storageApi.isUsingOnlineStorage()) {
                 console.log('DataContext: Using online storage');
                 const result = await storageApi.addVisitor(visitor);
@@ -200,15 +235,15 @@ export const DataProvider = ({ children }) => {
                 const result = storage.addVisitor(visitor);
                 console.log('DataContext: Local storage result:', result);
             }
-            
+
             // Force refresh to ensure all components get updated data
             console.log('DataContext: Refreshing data after visitor creation...');
             await refreshData();
             console.log('DataContext: Data refreshed successfully');
-            
+
             // Additional delay to ensure state is updated
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             return visitor;
         } catch (error) {
             console.error('DataContext: Error in addVisitor:', error);
@@ -342,13 +377,46 @@ export const DataProvider = ({ children }) => {
     };
 
     const getPendingResidents = (societyId) => {
-        return users.filter(u =>
-            u.roles.some(r =>
-                r.role === 'resident' &&
-                r.societyId === societyId &&
-                r.status === 'pending'
+        return users.filter(user =>
+            user.roles.some(role =>
+                role.role === 'resident' && role.societyId === societyId && role.status === 'pending'
             )
         );
+    };
+
+    // Generic CRUD handlers
+    const addDataItem = async (collection, data) => {
+        const newItem = await storageApi.addData(collection, data);
+        await refreshData();
+        return newItem;
+    };
+
+    const updateDataItem = async (collection, id, updates) => {
+        const updated = await storageApi.updateData(collection, id, updates);
+        await refreshData();
+        return updated;
+    };
+
+    const deleteDataItem = async (collection, id) => {
+        await storageApi.deleteData(collection, id);
+        await refreshData();
+    };
+
+    const triggerSOS = async (residentId, societyId, message) => {
+        const alert = await addDataItem('sos_alerts', {
+            residentId,
+            societyId,
+            message,
+            status: 'active'
+        });
+        return alert;
+    };
+
+    const resolveSOS = async (id, resolvedBy) => {
+        await updateDataItem('sos_alerts', id, {
+            status: 'resolved',
+            resolvedBy
+        });
     };
 
     const value = {
@@ -356,14 +424,32 @@ export const DataProvider = ({ children }) => {
         users,
         societies,
         visitors,
+        notices,
+        preApprovals,
+        vehicles,
+        complaints,
+        amenities,
+        bookings,
+        staff,
+        payments,
+        sosAlerts,
+        documents,
         loading,
+
+        // Generic CRUD
+        addDataItem,
+        updateDataItem,
+        deleteDataItem,
+
+        // SOS
+        triggerSOS,
+        resolveSOS,
 
         // User operations
         addUser,
         updateUser,
         deleteUserById,
         getUserById,
-        getUserByEmail,
         getUserByLoginName,
 
         // Society operations

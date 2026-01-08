@@ -11,7 +11,7 @@ import CameraCapture from '../../components/CameraCapture';
 import {
     LayoutDashboard, UserPlus, ClipboardList, LogOut as LogOutIcon,
     Camera, Check, X, User, Phone, MapPin, FileText, Building2,
-    Ticket, Search, Megaphone
+    Ticket, Search, Megaphone, AlertTriangle, Bell, ShieldAlert, Car, Contact, LogIn, LogOut
 } from 'lucide-react';
 import NoticeBoard from '../../components/NoticeBoard';
 import { formatDateTime, getInitials } from '../../utils/validators';
@@ -24,6 +24,8 @@ const sidebarItems = [
             { path: '/new-visitor', label: 'New Visitor Entry', icon: UserPlus },
             { path: '/active-visits', label: 'Active Visits', icon: ClipboardList },
             { path: '/verify-pass', label: 'Verify Pass', icon: Ticket },
+            { path: '/vehicle-lookup', label: 'Vehicle Lookup', icon: Car },
+            { path: '/staff-gate', label: 'Staff Gate Logs', icon: Contact },
             { path: '/notices', label: 'Notice Board', icon: Megaphone }
         ]
     }
@@ -169,7 +171,7 @@ const NewVisitorPage = () => {
             console.log('Visitor added successfully:', result);
 
             setSuccess('Visitor entry created! Waiting for resident approval.');
-            
+
             // Reset form
             setFormData({
                 name: '',
@@ -184,7 +186,7 @@ const NewVisitorPage = () => {
 
         } catch (error) {
             console.error('Error adding visitor:', error);
-            
+
             // Provide more specific error messages
             if (error.message) {
                 if (error.message.includes('storage')) {
@@ -395,7 +397,7 @@ const ActiveVisitsPage = () => {
     const filteredVisitors = societyVisitors.filter(v => {
         // Handle both camelCase and lowercase field names for exitTime
         const exitTime = v.exitTime || v.exittime;
-        
+
         switch (filter) {
             case 'pending':
                 return v.status === 'pending';
@@ -532,6 +534,198 @@ const ActiveVisitsPage = () => {
     );
 };
 
+const SOSAlertOverlay = () => {
+    const { currentRole, currentUser } = useAuth();
+    const { sosAlerts, users, resolveSOS } = useData();
+
+    const activeAlerts = sosAlerts.filter(a =>
+        (a.societyId === currentRole?.societyId || a.societyid === currentRole?.societyId) &&
+        a.status === 'active'
+    );
+
+    if (activeAlerts.length === 0) return null;
+
+    const getResidentInfo = (residentId) => {
+        const resident = users.find(u => u.id === residentId);
+        if (!resident) return { name: 'Unknown', flat: 'N/A' };
+        const role = resident.roles.find(r => r.role === 'resident' && r.societyId === currentRole?.societyId);
+        return {
+            name: resident.name,
+            flat: `${role?.block || ''}-${role?.flatNumber || ''}`
+        };
+    };
+
+    return (
+        <div className="sos-overlay-container">
+            {activeAlerts.map(alert => {
+                const resident = getResidentInfo(alert.residentId);
+                return (
+                    <div key={alert.id} className="sos-emergency-card animate-pulse">
+                        <div className="sos-emergency-header">
+                            <AlertTriangle size={48} className="sos-blink-icon" />
+                            <div>
+                                <h1 className="emergency-title">EMERGENCY ALERT</h1>
+                                <p className="emergency-subtitle">Immediate Assistance Required</p>
+                            </div>
+                        </div>
+
+                        <div className="sos-resident-details">
+                            <div className="sos-detail-item">
+                                <span className="label">RESIDENT</span>
+                                <span className="value">{resident.name}</span>
+                            </div>
+                            <div className="sos-detail-item">
+                                <span className="label">LOCATION</span>
+                                <span className="value">Flat {resident.flat}</span>
+                            </div>
+                            <div className="sos-detail-item">
+                                <span className="label">TIME</span>
+                                <span className="value">{new Date(alert.createdAt).toLocaleTimeString()}</span>
+                            </div>
+                        </div>
+
+                        <button
+                            className="sos-resolve-btn"
+                            onClick={() => resolveSOS(alert.id, currentUser.id)}
+                        >
+                            <ShieldAlert size={20} />
+                            MARK AS RESPONDED
+                        </button>
+                    </div>
+                );
+            })}
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .sos-overlay-container {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: rgba(0, 0, 0, 0.85);
+                    backdrop-filter: blur(10px);
+                    z-index: 9999;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                    gap: 2rem;
+                }
+
+                .sos-emergency-card {
+                    background: #fff;
+                    width: 100%;
+                    max-width: 600px;
+                    border-radius: 2rem;
+                    padding: 3rem;
+                    box-shadow: 0 0 50px rgba(220, 38, 38, 0.8);
+                    border: 5px solid var(--error-600);
+                    animation: emergency-shake 0.5s infinite;
+                }
+
+                @keyframes emergency-shake {
+                    0% { transform: translate(1px, 1px) rotate(0deg); }
+                    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+                    20% { transform: translate(-3px, 0px) rotate(1deg); }
+                    30% { transform: translate(3px, 2px) rotate(0deg); }
+                    40% { transform: translate(1px, -1px) rotate(1deg); }
+                    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+                    60% { transform: translate(-3px, 1px) rotate(0deg); }
+                    70% { transform: translate(3px, 1px) rotate(-1deg); }
+                    80% { transform: translate(-1px, -1px) rotate(1deg); }
+                    90% { transform: translate(1px, 2px) rotate(0deg); }
+                    100% { transform: translate(1px, -2px) rotate(-1deg); }
+                }
+
+                .sos-emergency-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 1.5rem;
+                    margin-bottom: 2.5rem;
+                    color: var(--error-700);
+                }
+
+                .emergency-title {
+                    font-size: 2.5rem;
+                    font-weight: 900;
+                    margin: 0;
+                    line-height: 1;
+                    letter-spacing: -1px;
+                }
+
+                .emergency-subtitle {
+                    margin: 0.5rem 0 0;
+                    font-weight: 600;
+                    letter-spacing: 0.2rem;
+                    text-transform: uppercase;
+                    font-size: 0.875rem;
+                    opacity: 0.8;
+                }
+
+                .sos-blink-icon {
+                    animation: blink-error 0.5s infinite alternate;
+                }
+
+                @keyframes blink-error {
+                    from { color: var(--error-600); transform: scale(1); }
+                    to { color: var(--error-900); transform: scale(1.2); }
+                }
+
+                .sos-resident-details {
+                    display: grid;
+                    gap: 1.5rem;
+                    margin-bottom: 3rem;
+                }
+
+                .sos-detail-item {
+                    display: flex;
+                    flex-direction: column;
+                    border-bottom: 1px solid var(--border-color);
+                    padding-bottom: 1rem;
+                }
+
+                .sos-detail-item .label {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    color: var(--text-muted);
+                    margin-bottom: 0.25rem;
+                    letter-spacing: 0.05rem;
+                }
+
+                .sos-detail-item .value {
+                    font-size: 1.5rem;
+                    font-weight: 800;
+                    color: var(--text-main);
+                }
+
+                .sos-resolve-btn {
+                    width: 100%;
+                    background: #000;
+                    color: white;
+                    border: none;
+                    padding: 1.5rem;
+                    border-radius: 1rem;
+                    font-size: 1.125rem;
+                    font-weight: 800;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 1rem;
+                    transition: all 0.2s;
+                }
+
+                .sos-resolve-btn:hover {
+                    background: var(--success-600);
+                    transform: translateY(-2px);
+                }
+            ` }} />
+        </div>
+    );
+};
+
 // Main Dashboard Layout
 const SecurityDashboard = () => {
     return (
@@ -545,10 +739,13 @@ const SecurityDashboard = () => {
                         <Route path="/new-visitor" element={<NewVisitorPage />} />
                         <Route path="/active-visits" element={<ActiveVisitsPage />} />
                         <Route path="/verify-pass" element={<VerifyPassPage />} />
+                        <Route path="/vehicle-lookup" element={<VehicleLookupPage />} />
+                        <Route path="/staff-gate" element={<StaffGatePage />} />
                         <Route path="/notices" element={<NoticeBoardPage />} />
                     </Routes>
                 </div>
             </div>
+            <SOSAlertOverlay />
         </div>
     );
 };
@@ -682,4 +879,200 @@ const NoticeBoardPage = () => {
     );
 };
 
+// Vehicle Lookup Page for Security
+const VehicleLookupPage = () => {
+    const { currentRole } = useAuth();
+    const { vehicles, users } = useData();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [result, setResult] = useState(null);
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (!searchTerm) return;
+
+        const normalizedSearch = searchTerm.replace(/\s+/g, '').toUpperCase();
+        const found = vehicles.find(v =>
+            v.societyId === currentRole.societyId &&
+            v.plateNumber.replace(/\s+/g, '').toUpperCase() === normalizedSearch
+        );
+
+        if (found) {
+            const owner = users.find(u => u.id === found.residentId);
+            const ownerRole = owner?.roles.find(r => r.role === 'resident' && r.societyId === currentRole.societyId);
+            setResult({ ...found, ownerName: owner?.name, flat: `${ownerRole?.block}-${ownerRole?.flatNumber}` });
+        } else {
+            setResult(false);
+        }
+    };
+
+    return (
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <h2 className="mb-6">Resident Vehicle Lookup</h2>
+
+            <form onSubmit={handleSearch} className="card flex gap-4 mb-8">
+                <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter Plate Number (e.g. MH 12 AB 1234)"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ fontSize: '1.25rem', fontWeight: 'bold' }}
+                />
+                <button type="submit" className="btn btn-primary" style={{ padding: '0 2rem' }}>
+                    <Search size={20} />
+                    Search
+                </button>
+            </form>
+
+            {result === false && (
+                <div className="alert alert-warning animate-fadeIn">
+                    <X size={18} />
+                    No registered vehicle found with this plate number.
+                </div>
+            )}
+
+            {result && (
+                <div className="card animate-slideUp">
+                    <div className="flex-between items-start mb-8">
+                        <div>
+                            <div className="text-muted text-sm uppercase tracking-wider mb-1">Registered Vehicle</div>
+                            <div className="plate-number-display">{result.plateNumber}</div>
+                        </div>
+                        <div className={`vehicle-type-badge ${result.type}`}>
+                            {result.type === 'car' ? <Car size={24} /> : <span>🏍️</span>}
+                            <span>{result.type.toUpperCase()}</span>
+                        </div>
+                    </div>
+
+                    <div className="grid-2 gap-12">
+                        <div>
+                            <div className="label-sm mb-2">VEHICLE DETAILS</div>
+                            <div className="p-4 bg-soft rounded-lg">
+                                <div className="flex-between mb-2">
+                                    <span className="text-muted">Make</span>
+                                    <span className="font-semibold">{result.make || 'N/A'}</span>
+                                </div>
+                                <div className="flex-between">
+                                    <span className="text-muted">Model</span>
+                                    <span className="font-semibold">{result.model || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="label-sm mb-2">RESIDENT INFO</div>
+                            <div className="p-4 bg-soft rounded-lg border-2 border-primary-100">
+                                <div className="flex-between mb-2">
+                                    <span className="text-muted">Owner</span>
+                                    <span className="font-semibold">{result.ownerName}</span>
+                                </div>
+                                <div className="flex-between">
+                                    <span className="text-muted">Flat No.</span>
+                                    <span className="font-semibold">Flat {result.flat}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .plate-number-display {
+                    font-size: 2.5rem;
+                    font-weight: 900;
+                    letter-spacing: 0.1em;
+                    color: var(--text-main);
+                }
+                .label-sm { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); opacity: 0.7; }
+                .vehicle-type-badge {
+                    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+                    padding: 1rem; border-radius: 1rem; width: 80px;
+                }
+                .vehicle-type-badge.car { background: var(--primary-100); color: var(--primary-700); }
+                .vehicle-type-badge.bike { background: var(--warning-100); color: var(--warning-700); }
+            ` }} />
+        </div>
+    );
+};
+
 export default SecurityDashboard;
+
+// Staff Gate Management Page
+const StaffGatePage = () => {
+    const { currentRole } = useAuth();
+    const { staff, updateDataItem, addDataItem } = useData();
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const societyStaff = staff.filter(s => (s.societyId === currentRole.societyId || s.societyid === currentRole.societyId));
+    const filteredStaff = societyStaff.filter(s =>
+        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleToggleGate = async (member) => {
+        const newStatus = !member.atGate;
+        await updateDataItem('staff', member.id, { atGate: newStatus });
+
+        // Also add to staff_logs for history
+        await addDataItem('staff_logs', {
+            staffId: member.id,
+            societyId: currentRole.societyId,
+            action: newStatus ? 'entry' : 'exit',
+            timestamp: new Date().toISOString()
+        });
+    };
+
+    return (
+        <div>
+            <div className="flex-between mb-6">
+                <h2>Staff Gate Management</h2>
+                <div className="search-box" style={{ maxWidth: '300px' }}>
+                    <Search size={18} />
+                    <input type="text" placeholder="Search staff name or role..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+            </div>
+
+            {filteredStaff.length === 0 ? (
+                <EmptyState icon={Contact} title="No Staff Found" description="Try searching for a different name or role." />
+            ) : (
+                <div className="grid-3">
+                    {filteredStaff.map(member => (
+                        <div key={member.id} className={`card staff-gate-card ${member.atGate ? 'inside' : 'outside'}`}>
+                            <div className="flex gap-4">
+                                <div className="header-avatar" style={{ width: 48, height: 48 }}>{getInitials(member.name)}</div>
+                                <div>
+                                    <h3 className="font-bold">{member.name}</h3>
+                                    <div className="text-xs font-bold uppercase text-primary-400">{member.role}</div>
+                                </div>
+                            </div>
+                            <div className="mt-6 flex-between">
+                                <div className="status-indicator">
+                                    <span className="dot"></span>
+                                    {member.atGate ? 'INSIDE' : 'OUTSIDE'}
+                                </div>
+                                <button
+                                    className={`btn ${member.atGate ? 'btn-danger' : 'btn-success'} btn-sm`}
+                                    onClick={() => handleToggleGate(member)}
+                                >
+                                    {member.atGate ? <LogOut size={14} /> : <LogIn size={14} />}
+                                    {member.atGate ? 'Mark Exit' : 'Mark Entry'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .staff-gate-card { border-top: 4px solid var(--border-color); }
+                .staff-gate-card.inside { border-top-color: var(--success-500); background: rgba(16, 185, 129, 0.05); }
+                .staff-gate-card.outside { border-top-color: var(--border-color); }
+                .status-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); }
+                .inside .status-indicator { color: var(--success-500); }
+                .inside .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-500); box-shadow: 0 0 10px var(--success-500); }
+                .dot { width: 8px; height: 8px; border-radius: 50%; background: #6b7280; }
+            ` }} />
+        </div>
+    );
+};

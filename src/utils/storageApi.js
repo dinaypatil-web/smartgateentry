@@ -170,6 +170,43 @@ export const updatePreApproval = async (id, updates) => {
     return localStorage.updatePreApproval(id, updates);
 };
 
+// Generic CRUD operations
+export const getData = async (collection) => {
+    if (USE_ONLINE_STORAGE) {
+        return await api.getData(collection);
+    }
+    return localStorage.getData(collection);
+};
+
+export const addData = async (collection, data) => {
+    if (USE_ONLINE_STORAGE) {
+        return await api.addData(collection, data);
+    }
+    return localStorage.addData(collection, data);
+};
+
+export const updateData = async (collection, id, updates) => {
+    if (USE_ONLINE_STORAGE) {
+        return await api.updateData(collection, id, updates);
+    }
+    return localStorage.updateData(collection, id, updates);
+};
+
+export const deleteData = async (collection, id) => {
+    if (USE_ONLINE_STORAGE) {
+        return await api.deleteData(collection, id);
+    }
+    return localStorage.deleteData(collection, id);
+};
+
+// Module-specific getters for convenience in DataContext
+export const getVehicles = () => getData('vehicles');
+export const getComplaints = () => getData('complaints');
+export const getAmenities = () => getData('amenities');
+export const getBookings = () => getData('bookings');
+export const getStaff = () => getData('staff');
+export const getPayments = () => getData('payments');
+
 // Current user session (always use localStorage for session)
 export const getCurrentUser = () => localStorage.getCurrentUser();
 export const setCurrentUser = (user) => localStorage.setCurrentUser(user);
