@@ -175,7 +175,8 @@ const PendingPage = () => {
     const handleBlock = (visitorId) => {
         updateVisitor(visitorId, {
             status: 'blocked',
-            blockedBy: currentUser.id
+            blockedBy: currentUser.id,
+            blockedDate: new Date().toISOString()
         });
         setShowBlockConfirm(null);
     };
@@ -473,7 +474,8 @@ const HistoryPage = () => {
                 onConfirm={async () => {
                     await updateVisitor(showBlockConfirm.id, {
                         status: 'blocked',
-                        blockedBy: currentUser.id
+                        blockedBy: currentUser.id,
+                        blockedDate: new Date().toISOString()
                     });
                     setShowBlockConfirm(null);
                 }}
@@ -492,14 +494,16 @@ const BlockedPage = () => {
     const { visitors, updateVisitor } = useData();
     const [unblockConfirm, setUnblockConfirm] = useState(null);
 
-    const blockedVisitors = visitors.filter(v =>
-        v.residentId === currentUser?.id && (v.status === 'blocked' || v.status === 'pending_unblock')
-    );
+    const blockedVisitors = visitors.filter(v => {
+        const visitorResidentId = v.residentId || v.residentid;
+        return visitorResidentId === currentUser?.id && (v.status === 'blocked' || v.status === 'pending_unblock');
+    });
 
     const handleUnblock = (visitorId) => {
         updateVisitor(visitorId, {
             status: 'pending_unblock', // Needs admin approval
-            unblockRequestedBy: currentUser.id
+            unblockRequestedBy: currentUser.id,
+            unblockRequestedDate: new Date().toISOString()
         });
         setUnblockConfirm(null);
     };
@@ -545,8 +549,8 @@ const BlockedPage = () => {
                                                 <span className="font-medium">{visitor.name}</span>
                                             </div>
                                         </td>
-                                        <td className="text-muted">{visitor.contactNumber}</td>
-                                        <td className="text-sm text-muted">{formatDateTime(visitor.entryTime)}</td>
+                                        <td className="text-muted">{visitor.contactNumber || visitor.contactnumber}</td>
+                                        <td className="text-sm text-muted">{formatDateTime(visitor.blockedDate || visitor.blockeddate || visitor.entryTime || visitor.entrytime)}</td>
                                         <td>
                                             {visitor.status === 'pending_unblock' ? (
                                                 <StatusBadge status={visitor.status} />

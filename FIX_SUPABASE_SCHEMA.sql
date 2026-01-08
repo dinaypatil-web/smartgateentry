@@ -46,6 +46,9 @@ alter table visitors add column if not exists visitorname text;
 alter table visitors add column if not exists expecteddate text;
 alter table visitors add column if not exists passcode text;
 alter table visitors add column if not exists unblockrequestedby text;
+alter table visitors add column if not exists blockedby text;
+alter table visitors add column if not exists blockeddate text;
+alter table visitors add column if not exists unblockrequesteddate text;
 
 -- NOTICES
 alter table notices add column if not exists title text;

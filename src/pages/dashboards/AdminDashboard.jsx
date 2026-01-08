@@ -97,7 +97,10 @@ const DashboardHome = () => {
                         <Unlock size={24} />
                     </div>
                     <div className="stat-content">
-                        <div className="stat-value">{visitors.filter(v => v.societyId === currentRole?.societyId && v.status === 'pending_unblock').length}</div>
+                        <div className="stat-value">{visitors.filter(v => {
+                            const visitorSocietyId = v.societyId || v.societyid;
+                            return visitorSocietyId === currentRole?.societyId && v.status === 'pending_unblock';
+                        }).length}</div>
                         <div className="stat-label">Unblock Requests</div>
                     </div>
                 </div>
@@ -111,9 +114,10 @@ const UnblockRequestsPage = () => {
     const { currentRole } = useAuth();
     const { visitors, users, updateVisitor } = useData();
 
-    const requests = visitors.filter(v =>
-        v.societyId === currentRole?.societyId && v.status === 'pending_unblock'
-    );
+    const requests = visitors.filter(v => {
+        const visitorSocietyId = v.societyId || v.societyid;
+        return visitorSocietyId === currentRole?.societyId && v.status === 'pending_unblock';
+    });
 
     const getResidentName = (residentId) => {
         const resident = users.find(u => u.id === residentId);
@@ -121,7 +125,12 @@ const UnblockRequestsPage = () => {
     };
 
     const handleApproveUnblock = (visitorId) => {
-        updateVisitor(visitorId, { status: 'unblocked' });
+        // When admin approves unblock, reset status to pending 
+        // so resident can then approve/reject/block again if needed
+        updateVisitor(visitorId, {
+            status: 'pending',
+            unblockApprovedBy: currentRole?.userId // Track who approved
+        });
     };
 
     const handleRejectUnblock = (visitorId) => {
@@ -169,8 +178,8 @@ const UnblockRequestsPage = () => {
                                                 <span className="font-medium">{visitor.name}</span>
                                             </div>
                                         </td>
-                                        <td className="text-muted">{visitor.contactNumber}</td>
-                                        <td className="text-muted">{getResidentName(visitor.unblockRequestedBy || visitor.residentId)}</td>
+                                        <td className="text-muted">{visitor.contactNumber || visitor.contactnumber}</td>
+                                        <td className="text-muted">{getResidentName(visitor.unblockRequestedBy || visitor.residentId || visitor.residentid)}</td>
                                         <td>
                                             <div className="table-actions">
                                                 <button

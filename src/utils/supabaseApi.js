@@ -55,7 +55,7 @@ const fromDb = (data) => {
         'permissionFromDate', 'permissionToDate',
         'idProof', 'comingFrom', 'contactNumber', 'residentId', 'societyId', 'entryTime', 'exitTime',
         'visitorName', 'expectedDate', 'passCode', 'isResigned', 'unblockRequestedBy',
-        'securityQuestion', 'securityAnswer', 'unblockRequestedDate'
+        'securityQuestion', 'securityAnswer', 'unblockRequestedDate', 'blockedBy', 'blockedDate'
     ];
     
     // If it's an array, map each item
