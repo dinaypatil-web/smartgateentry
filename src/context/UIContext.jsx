@@ -13,7 +13,18 @@ export const useUI = () => {
 
 export const UIProvider = ({ children }) => {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
     const location = useLocation();
+
+    // Persist theme and apply class to document element
+    useEffect(() => {
+        localStorage.setItem('theme', theme);
+        if (theme === 'light') {
+            document.documentElement.classList.add('light-theme');
+        } else {
+            document.documentElement.classList.remove('light-theme');
+        }
+    }, [theme]);
 
     // Close sidebar when route changes on mobile
     useEffect(() => {
@@ -24,10 +35,16 @@ export const UIProvider = ({ children }) => {
         setMobileSidebarOpen(prev => !prev);
     };
 
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    };
+
     const value = {
         mobileSidebarOpen,
         setMobileSidebarOpen,
-        toggleMobileSidebar
+        toggleMobileSidebar,
+        theme,
+        toggleTheme
     };
 
     return (

@@ -467,20 +467,40 @@ export const DataProvider = ({ children }) => {
         await refreshData();
     };
 
-    const triggerSOS = async (residentId, societyId, message) => {
-        const alert = await addDataItem('sos_alerts', {
-            residentId,
-            societyId,
-            message,
-            status: 'active'
-        });
-        return alert;
+    // Simulated Integrations (Advanced Features)
+    const simulateNotification = (type, target, message) => {
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`%c[SIMULated ${type}] %cTo: ${target} %cMsg: ${message}`,
+            'color: #6366f1; font-weight: bold;',
+            'color: #8b5cf6;',
+            'color: var(--text-primary);',
+            `at ${timestamp}`
+        );
+        // In a real app, this would call a Twilio/Msg91/WhatsApp API
     };
 
-    const resolveSOS = async (id, resolvedBy) => {
-        await updateDataItem('sos_alerts', id, {
+    const triggerSOS = async (userId, societyId, message) => {
+        const alertData = {
+            residentId: userId,
+            societyId: societyId,
+            message: message || 'Emergency SOS Alert!',
+            status: 'active',
+            createdAt: new Date().toISOString()
+        };
+        const result = await addDataItem('sos_alerts', alertData);
+
+        // Simulate immediate WhatsApp/SMS alerts to security
+        simulateNotification('WHATSAPP', 'Security Team', `🚨 EMERGENCY SOS: ${message}`);
+        simulateNotification('SMS', 'Head Guard', `SOS Alert from Society. Check dashboard immediately!`);
+
+        return result;
+    };
+
+    const resolveSOS = async (alertId) => {
+        simulateNotification('EMAIL', 'Admin', `SOS Alert ${alertId} has been resolved by Security.`);
+        return updateDataItem('sos_alerts', alertId, {
             status: 'resolved',
-            resolvedBy
+            resolvedAt: new Date().toISOString()
         });
     };
 

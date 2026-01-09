@@ -123,6 +123,30 @@
     --z-toast: 300;
 }
 
+/* Light Theme Overrides */
+.light-theme {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --bg-glass: rgba(0, 0, 0, 0.03);
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+
+    --border-color: rgba(0, 0, 0, 0.08);
+    --border-active: rgba(99, 102, 241, 0.4);
+
+    --gradient-dark: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    --gradient-glow: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
 /* ===== Reset & Base Styles ===== */
 *,
 *::before,
@@ -144,9 +168,11 @@ body {
     color: var(--text-primary);
     background: var(--bg-primary);
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS Safari */
+    min-height: -webkit-fill-available;
+    /* iOS Safari */
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     /* Prevent pull-to-refresh on mobile (optional) */
@@ -161,14 +187,17 @@ body {
 
 #root {
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS Safari */
+    min-height: -webkit-fill-available;
+    /* iOS Safari */
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     display: flex;
     flex-direction: column;
     width: 100%;
     max-width: 100vw;
-    overflow: hidden; /* Prevent root from scrolling, let children handle it */
+    overflow: hidden;
+    /* Prevent root from scrolling, let children handle it */
 }
 
 /* ===== Typography ===== */
@@ -225,12 +254,15 @@ a:hover {
 .app-container {
     display: flex;
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS Safari */
+    min-height: -webkit-fill-available;
+    /* iOS Safari */
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     width: 100%;
     max-width: 100vw;
-    overflow: hidden; /* Container doesn't scroll, children do */
+    overflow: hidden;
+    /* Container doesn't scroll, children do */
 }
 
 .main-content {
@@ -239,13 +271,16 @@ a:hover {
     flex-direction: column;
     margin-left: 280px;
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS Safari */
+    min-height: -webkit-fill-available;
+    /* iOS Safari */
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     transition: margin-left var(--transition-base);
     width: calc(100% - 280px);
     max-width: calc(100vw - 280px);
-    overflow: hidden; /* Prevent main-content from scrolling */
+    overflow: hidden;
+    /* Prevent main-content from scrolling */
     position: relative;
 }
 
@@ -260,9 +295,12 @@ a:hover {
     padding: var(--space-8);
     background: var(--gradient-dark);
     position: relative;
-    overflow-x: auto; /* Allow horizontal scroll when needed */
-    overflow-y: auto; /* Allow vertical scroll */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    overflow-x: auto;
+    /* Allow horizontal scroll when needed */
+    overflow-y: auto;
+    /* Allow vertical scroll */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
     width: 100%;
     max-width: 100%;
     /* Ensure content doesn't overflow viewport */
@@ -271,7 +309,8 @@ a:hover {
 
 .page-content::before {
     content: '';
-    position: fixed; /* Changed to fixed so it doesn't affect scrolling */
+    position: fixed;
+    /* Changed to fixed so it doesn't affect scrolling */
     top: 0;
     left: 50%;
     transform: translateX(-50%);
@@ -294,9 +333,11 @@ a:hover {
     z-index: 1;
     transition: all var(--transition-base);
     width: 100%;
-    max-width: 100%; /* Ensure card doesn't overflow parent */
+    max-width: 100%;
+    /* Ensure card doesn't overflow parent */
     box-sizing: border-box;
-    overflow: visible; /* Allow content to be visible, but prevent card itself from overflowing */
+    overflow: visible;
+    /* Allow content to be visible, but prevent card itself from overflowing */
 }
 
 .card:hover {
@@ -332,7 +373,8 @@ a:hover {
     gap: var(--space-6);
     margin-bottom: var(--space-8);
     width: 100%;
-    max-width: 100%; /* Ensure grid doesn't overflow parent */
+    max-width: 100%;
+    /* Ensure grid doesn't overflow parent */
     box-sizing: border-box;
 }
 
@@ -609,21 +651,28 @@ a:hover {
 
 /* ===== Tables ===== */
 .table-container {
-    overflow-x: auto; /* Horizontal scroll when table is wide */
-    overflow-y: auto; /* Vertical scroll when table is tall */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    overflow-x: auto;
+    /* Horizontal scroll when table is wide */
+    overflow-y: auto;
+    /* Vertical scroll when table is tall */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     width: 100%;
-    max-width: 100%; /* Ensure it doesn't overflow parent */
-    position: relative; /* For scroll indicators */
+    max-width: 100%;
+    /* Ensure it doesn't overflow parent */
+    position: relative;
+    /* For scroll indicators */
 }
 
 .table {
     width: 100%;
-    min-width: 100%; /* Ensure table takes full width of container */
+    min-width: 100%;
+    /* Ensure table takes full width of container */
     border-collapse: collapse;
-    table-layout: auto; /* Allow table to expand based on content */
+    table-layout: auto;
+    /* Allow table to expand based on content */
 }
 
 .table th,
@@ -713,8 +762,10 @@ a:hover {
     padding: var(--space-4);
     z-index: var(--z-modal);
     animation: fadeIn var(--transition-fast);
-    overflow-y: auto; /* Allow modal overlay to scroll if needed */
-    overflow-x: auto; /* Allow horizontal scroll if needed */
+    overflow-y: auto;
+    /* Allow modal overlay to scroll if needed */
+    overflow-x: auto;
+    /* Allow horizontal scroll if needed */
     -webkit-overflow-scrolling: touch;
     /* Safe area for notched devices */
     padding-top: max(var(--space-4), env(safe-area-inset-top));
@@ -731,13 +782,16 @@ a:hover {
     max-width: 500px;
     max-height: 90vh;
     max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--space-8));
-    overflow-y: auto; /* Allow vertical scroll when content is tall */
-    overflow-x: auto; /* Allow horizontal scroll when content is wide */
+    overflow-y: auto;
+    /* Allow vertical scroll when content is tall */
+    overflow-x: auto;
+    /* Allow horizontal scroll when content is wide */
     -webkit-overflow-scrolling: touch;
     animation: slideUp var(--transition-base);
     display: flex;
     flex-direction: column;
-    margin: auto; /* Center the modal */
+    margin: auto;
+    /* Center the modal */
 }
 
 .modal-header {
@@ -774,11 +828,14 @@ a:hover {
 
 .modal-body {
     padding: var(--space-6);
-    overflow-y: auto; /* Allow scrolling in modal body if needed */
-    overflow-x: auto; /* Allow horizontal scroll if needed */
+    overflow-y: auto;
+    /* Allow scrolling in modal body if needed */
+    overflow-x: auto;
+    /* Allow horizontal scroll if needed */
     -webkit-overflow-scrolling: touch;
     flex: 1;
-    min-height: 0; /* Important for flex scrolling */
+    min-height: 0;
+    /* Important for flex scrolling */
 }
 
 .modal-footer {
@@ -792,17 +849,21 @@ a:hover {
 /* ===== Auth Pages ===== */
 .auth-container {
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS Safari */
+    min-height: -webkit-fill-available;
+    /* iOS Safari */
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     display: flex;
     align-items: center;
     justify-content: center;
     padding: var(--space-4);
     background: var(--gradient-dark);
     position: relative;
-    overflow-y: auto; /* Allow scrolling if content is tall */
-    overflow-x: auto; /* Allow horizontal scroll if needed */
+    overflow-y: auto;
+    /* Allow scrolling if content is tall */
+    overflow-x: auto;
+    /* Allow horizontal scroll if needed */
     -webkit-overflow-scrolling: touch;
     width: 100%;
     max-width: 100vw;
@@ -837,9 +898,11 @@ a:hover {
     position: relative;
     z-index: 1;
     box-sizing: border-box;
-    overflow-y: auto; /* Allow scrolling if content is tall */
+    overflow-y: auto;
+    /* Allow scrolling if content is tall */
     max-height: calc(100vh - var(--space-8) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    margin: auto; /* Center the card */
+    margin: auto;
+    /* Center the card */
 }
 
 .auth-logo {
@@ -895,9 +958,11 @@ a:hover {
 .sidebar {
     width: 280px;
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     max-height: 100vh;
-    max-height: -webkit-fill-available; /* iOS Safari */
+    max-height: -webkit-fill-available;
+    /* iOS Safari */
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
     position: fixed;
@@ -910,7 +975,8 @@ a:hover {
     /* Safe area for notched devices */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
-    overflow: hidden; /* Prevent sidebar container from scrolling */
+    overflow: hidden;
+    /* Prevent sidebar container from scrolling */
     box-sizing: border-box;
 }
 
@@ -948,10 +1014,14 @@ a:hover {
 .sidebar-nav {
     flex: 1;
     padding: var(--space-4);
-    overflow-y: auto; /* Allow vertical scrolling in nav */
-    overflow-x: hidden; /* Prevent horizontal scroll */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    min-height: 0; /* Important for flex scrolling */
+    overflow-y: auto;
+    /* Allow vertical scrolling in nav */
+    overflow-x: hidden;
+    /* Prevent horizontal scroll */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+    min-height: 0;
+    /* Important for flex scrolling */
 }
 
 .nav-section {
@@ -1184,6 +1254,62 @@ a:hover {
     margin: var(--space-2) 0;
 }
 
+.dropdown-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99;
+    background: transparent;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn var(--transition-base) forwards;
+}
+
+.animate-slideUp {
+    animation: slideUp var(--transition-base) forwards;
+}
+
+.animate-slideDown {
+    animation: slideDown var(--transition-fast) forwards;
+}
+
 /* ===== Empty State ===== */
 .empty-state {
     text-align: center;
@@ -1216,17 +1342,21 @@ a:hover {
 /* ===== Role Selector ===== */
 .role-selector {
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS Safari */
+    min-height: -webkit-fill-available;
+    /* iOS Safari */
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     display: flex;
     align-items: center;
     justify-content: center;
     padding: var(--space-4);
     background: var(--gradient-dark);
     position: relative;
-    overflow-y: auto; /* Allow scrolling if content is tall */
-    overflow-x: auto; /* Allow horizontal scroll if needed */
+    overflow-y: auto;
+    /* Allow scrolling if content is tall */
+    overflow-x: auto;
+    /* Allow horizontal scroll if needed */
     -webkit-overflow-scrolling: touch;
     width: 100%;
     max-width: 100vw;
@@ -1260,7 +1390,8 @@ a:hover {
     position: relative;
     z-index: 1;
     box-sizing: border-box;
-    overflow-y: auto; /* Allow scrolling if content is tall */
+    overflow-y: auto;
+    /* Allow scrolling if content is tall */
     max-height: calc(100vh - var(--space-8) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
@@ -1336,7 +1467,8 @@ a:hover {
     border-radius: var(--radius-lg);
     object-fit: cover;
     /* Better mobile video display */
-    transform: scaleX(-1); /* Mirror for selfie mode */
+    transform: scaleX(-1);
+    /* Mirror for selfie mode */
     background: var(--bg-primary);
 }
 
@@ -1471,7 +1603,8 @@ a:hover {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-4);
     width: 100%;
-    max-width: 100%; /* Ensure grid doesn't overflow parent */
+    max-width: 100%;
+    /* Ensure grid doesn't overflow parent */
     box-sizing: border-box;
 }
 
@@ -1480,7 +1613,8 @@ a:hover {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-4);
     width: 100%;
-    max-width: 100%; /* Ensure grid doesn't overflow parent */
+    max-width: 100%;
+    /* Ensure grid doesn't overflow parent */
     box-sizing: border-box;
 }
 
@@ -1615,17 +1749,20 @@ a:hover {
 
 .max-h-screen {
     max-height: 100vh;
-    max-height: -webkit-fill-available; /* iOS Safari */
+    max-height: -webkit-fill-available;
+    /* iOS Safari */
 }
 
 /* Fit viewport */
 .fit-screen {
     width: 100vw;
     height: 100vh;
-    height: -webkit-fill-available; /* iOS Safari */
+    height: -webkit-fill-available;
+    /* iOS Safari */
     max-width: 100vw;
     max-height: 100vh;
-    max-height: -webkit-fill-available; /* iOS Safari */
+    max-height: -webkit-fill-available;
+    /* iOS Safari */
 }
 
 /* ===== Animations ===== */
@@ -1728,7 +1865,7 @@ a:hover {
 /* ===== Mobile-First Responsive Design ===== */
 
 /* Ensure minimum touch target sizes (44x44px) */
-button, 
+button,
 .btn,
 .nav-item,
 .dropdown-item,
@@ -1752,7 +1889,8 @@ input[type="tel"],
 input[type="search"],
 textarea,
 select {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
     -webkit-appearance: none;
     appearance: none;
 }
@@ -1772,7 +1910,7 @@ select {
         display: none;
     }
 
-    .sidebar.open ~ .sidebar-backdrop {
+    .sidebar.open~.sidebar-backdrop {
         display: block;
     }
 
@@ -1797,7 +1935,8 @@ select {
 
 @media (max-width: 768px) {
     html {
-        font-size: 14px; /* Slightly smaller base font on mobile */
+        font-size: 14px;
+        /* Slightly smaller base font on mobile */
     }
 
     .header {
@@ -1828,8 +1967,10 @@ select {
 
     .page-content {
         padding: var(--space-4);
-        overflow-x: auto; /* Allow horizontal scroll when needed */
-        overflow-y: auto; /* Allow vertical scroll */
+        overflow-x: auto;
+        /* Allow horizontal scroll when needed */
+        overflow-y: auto;
+        /* Allow vertical scroll */
         -webkit-overflow-scrolling: touch;
     }
 
@@ -1905,7 +2046,8 @@ select {
     .form-select,
     .form-textarea {
         padding: var(--space-4) var(--space-4);
-        font-size: 16px; /* Prevent iOS zoom */
+        font-size: 16px;
+        /* Prevent iOS zoom */
     }
 
     .form-label {
@@ -1931,15 +2073,19 @@ select {
     /* Table improvements - make scrollable on mobile */
     .table-container {
         -webkit-overflow-scrolling: touch;
-        overflow-x: auto; /* Horizontal scroll when table is wide */
-        overflow-y: auto; /* Vertical scroll when table is tall */
-        max-height: calc(100vh - 200px); /* Limit height to viewport */
+        overflow-x: auto;
+        /* Horizontal scroll when table is wide */
+        overflow-y: auto;
+        /* Vertical scroll when table is tall */
+        max-height: calc(100vh - 200px);
+        /* Limit height to viewport */
         width: 100%;
         max-width: 100%;
     }
 
     .table {
-        min-width: 600px; /* Force horizontal scroll if needed on mobile */
+        min-width: 600px;
+        /* Force horizontal scroll if needed on mobile */
         width: 100%;
     }
 
@@ -2181,8 +2327,10 @@ select {
 
     .page-content {
         padding: var(--space-2);
-        overflow-x: auto; /* Allow horizontal scroll when needed */
-        overflow-y: auto; /* Allow vertical scroll */
+        overflow-x: auto;
+        /* Allow horizontal scroll when needed */
+        overflow-y: auto;
+        /* Allow vertical scroll */
         -webkit-overflow-scrolling: touch;
     }
 

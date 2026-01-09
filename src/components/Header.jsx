@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { Menu, AlertTriangle, ChevronDown, User, Key, ArrowLeftRight, LogOut } from 'lucide-react';
+import { Menu, AlertTriangle, ChevronDown, User, Key, ArrowLeftRight, LogOut, Sun, Moon, Globe } from 'lucide-react';
 import { useUI } from '../context/UIContext';
 import { getInitials, getRoleLabel } from '../utils/validators';
 
@@ -10,10 +10,11 @@ const Header = ({ title }) => {
     const navigate = useNavigate();
     const { currentUser, currentRole, logout } = useAuth();
     const { getSocietyById, triggerSOS } = useData();
-    const { toggleMobileSidebar } = useUI();
+    const { toggleMobileSidebar, theme, toggleTheme } = useUI();
     const [isTriggeringSOS, setIsTriggeringSOS] = useState(false);
 
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showLangMenu, setShowLangMenu] = useState(false);
 
     const society = currentRole?.societyId ? getSocietyById(currentRole.societyId) : null;
     const approvedRoles = currentUser?.roles?.filter(r => r.status === 'approved') || [];
@@ -61,6 +62,34 @@ const Header = ({ title }) => {
             </div>
 
             <div className="header-right">
+                <button
+                    className="btn btn-ghost btn-icon btn-sm"
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+
+                <div className="dropdown">
+                    <button
+                        className="btn btn-ghost btn-icon btn-sm"
+                        onClick={() => setShowLangMenu(!showLangMenu)}
+                        title="Change Language"
+                    >
+                        <Globe size={18} />
+                    </button>
+                    {showLangMenu && (
+                        <>
+                            <div className="dropdown-backdrop" onClick={() => setShowLangMenu(false)} />
+                            <div className="dropdown-menu">
+                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'en'); window.location.reload(); }}>English</button>
+                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'hi'); window.location.reload(); }}>हिंदी (Hindi)</button>
+                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'mr'); window.location.reload(); }}>मराठी (Marathi)</button>
+                            </div>
+                        </>
+                    )}
+                </div>
+
                 <button
                     className="btn btn-danger btn-sm pulse"
                     style={{ borderRadius: 'var(--radius-full)', fontWeight: 'bold' }}

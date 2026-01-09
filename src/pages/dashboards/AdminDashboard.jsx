@@ -11,9 +11,10 @@ import NoticeBoard from '../../components/NoticeBoard';
 import NoticeForm from '../../components/NoticeForm'; // Added NoticeForm import
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
-    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart
+    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
+import { t } from '../../utils/i18n';
 import MyRoles from '../shared/MyRoles';
 import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
 
@@ -30,7 +31,9 @@ const sidebarItems = [
             { path: '/visitor-log', label: 'Visitor Log', icon: ClipboardList },
             { path: '/complaints', label: 'Resident Complaints', icon: ShieldAlert },
             { path: '/unblock-requests', label: 'Unblock Requests', icon: Unlock },
-            { path: '/notices', label: 'Notice Board', icon: Megaphone },
+            { path: '/notices', label: t('notices'), icon: Megaphone },
+            { path: '/analytics', label: t('analytics'), icon: BarChart2 },
+            { path: '/integrations', label: 'Integrations', icon: ShieldCheck },
             { path: '/my-roles', label: 'My Roles', icon: Users }
         ]
     }
@@ -105,7 +108,7 @@ const DashboardHome = () => {
 
     return (
         <div className="animate-fadeIn">
-            <h2 className="mb-6">Society Overview & Analytics</h2>
+            <h2 className="mb-6">{t('dashboard')} & {t('analytics')}</h2>
 
             <div className="stats-grid mb-8">
                 {statsData.map(stat => (
@@ -860,6 +863,8 @@ const AdminDashboard = () => {
                         <Route path="/complaints" element={<ComplaintsAdminPage />} />
                         <Route path="/unblock-requests" element={<UnblockRequestsPage />} />
                         <Route path="/notices" element={<NoticesPage />} />
+                        <Route path="/analytics" element={<AnalyticsPage />} />
+                        <Route path="/integrations" element={<IntegrationsPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
                     </Routes>
                 </div>
@@ -916,6 +921,173 @@ const NoticesPage = () => {
                     onCancel={() => setShowAddNotice(false)}
                 />
             </Modal>
+        </div>
+    );
+};
+
+// Analytics & Reports
+const AnalyticsPage = () => {
+    const { visitors, complaints, amenities, bookings, currentRole } = useData();
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+
+    // Filter data for this society
+    const societyVisitors = visitors.filter(v => (v.societyId === roleSocietyId || v.societyid === roleSocietyId));
+    const societyComplaints = complaints.filter(c => (c.societyId === roleSocietyId || c.societyid === roleSocietyId));
+    const societyBookings = bookings.filter(b => (b.societyId === roleSocietyId || b.societyid === roleSocietyId));
+
+    // Stats
+    const resolvedCount = societyComplaints.filter(c => c.status === 'resolved').length;
+    const pendingCount = societyComplaints.length - resolvedCount;
+
+    // Visitor trends (last 7 days simulation based on actual data if possible)
+    const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toDateString();
+        const count = societyVisitors.filter(v => new Date(v.entryTime).toDateString() === dateStr).length;
+        return { label: d.toLocaleDateString(undefined, { weekday: 'short' }), count };
+    }).reverse();
+
+    return (
+        <div className="animate-fadeIn">
+            <h2 className="mb-6">{t('analytics')} & Detailed Reports</h2>
+
+            <div className="grid-2 mb-8">
+                <div className="card">
+                    <h3 className="mb-6 flex-between">
+                        <span>Visitor Footfall (7 Days)</span>
+                        <TrendingUp size={18} className="text-success-500" />
+                    </h3>
+                    <div className="chart-container" style={{ height: 200, position: 'relative' }}>
+                        <svg viewBox="0 0 100 40" className="w-full h-full" overflow="visible">
+                            {/* Simple line chart path */}
+                            <polyline
+                                fill="none"
+                                stroke="var(--primary-500)"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                points={last7Days.map((d, i) => `${(i * 100) / 6},${40 - (d.count * 5)}`).join(' ')}
+                            />
+                            {/* Area fill */}
+                            <path
+                                fill="var(--primary-500)"
+                                fillOpacity="0.1"
+                                d={`M0,40 ${last7Days.map((d, i) => `L${(i * 100) / 6},${40 - (d.count * 5)}`).join(' ')} L100,40 Z`}
+                            />
+                        </svg>
+                        <div className="flex-between mt-4 text-xs text-muted">
+                            {last7Days.map(d => <span key={d.label}>{d.label}</span>)}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="card">
+                    <h3 className="mb-6">Complaint Resolution Time</h3>
+                    <div className="space-y-6">
+                        <div className="analytics-row">
+                            <div className="flex-between mb-2">
+                                <span className="text-sm">Resolved Rate</span>
+                                <span className="text-sm font-bold">{Math.round((resolvedCount / (societyComplaints.length || 1)) * 100)}%</span>
+                            </div>
+                            <div className="progress-bar" style={{ height: 12 }}>
+                                <div className="progress-fill bg-success-500" style={{ width: `${(resolvedCount / (societyComplaints.length || 1)) * 100}%` }}></div>
+                            </div>
+                        </div>
+                        <div className="grid-2 text-center">
+                            <div className="p-3 bg-glass rounded-lg">
+                                <div className="text-2xl font-bold text-success-500">{resolvedCount}</div>
+                                <div className="text-xs text-muted">Resolved</div>
+                            </div>
+                            <div className="p-3 bg-glass rounded-lg">
+                                <div className="text-2xl font-bold text-warning-500">{pendingCount}</div>
+                                <div className="text-xs text-muted">Awaiting</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 className="mb-6">Amenity Utilization Analysis</h3>
+                <div className="table-container">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>Amenity Name</th>
+                                <th>Total Bookings</th>
+                                <th>Popularity</th>
+                                <th>Revenue (Est)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {amenities.filter(a => a.societyId === roleSocietyId || a.societyid === roleSocietyId).map(amenity => {
+                                const bCount = societyBookings.filter(b => b.amenityId === amenity.id).length;
+                                return (
+                                    <tr key={amenity.id}>
+                                        <td className="font-medium">{amenity.name}</td>
+                                        <td>{bCount}</td>
+                                        <td>
+                                            <div className="flex items-center gap-3">
+                                                <div className="progress-bar" style={{ width: 100 }}>
+                                                    <div className="progress-fill" style={{ width: `${Math.min(100, bCount * 10)}%` }}></div>
+                                                </div>
+                                                <span className="text-xs">{bCount * 10}%</span>
+                                            </div>
+                                        </td>
+                                        <td className="text-success-500">₹{bCount * 500}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Integrations & Smart Hub (Simulated)
+const IntegrationsPage = () => {
+    const integrations = [
+        { id: 'whatsapp', name: 'WhatsApp Alerts', icon: Mail, status: 'active', desc: 'Real-time notifications for SOS and visitors.' },
+        { id: 'boom', name: 'Boom Barrier', icon: ShieldCheck, status: 'simulated', desc: 'Automated gate control for verified residents.' },
+        { id: 'cctv', name: 'Smart CCTV', icon: Eye, status: 'inactive', desc: 'AI recognition for suspicious activities.' },
+        { id: 'sms', name: 'SMS Gateway', icon: Mail, status: 'active', desc: 'Fallback notifications for low-data areas.' }
+    ];
+
+    return (
+        <div className="animate-fadeIn">
+            <h2 className="mb-6">Smart Hub & Integrations</h2>
+            <div className="alert alert-info mb-8">
+                <Info size={18} />
+                <span>Integration modules allow you to connect physical hardware and software gateways. Status <strong>"Simulated"</strong> indicates demo mode active.</span>
+            </div>
+
+            <div className="grid-2">
+                {integrations.map(int => (
+                    <div key={int.id} className="card">
+                        <div className="flex-between mb-4">
+                            <div className="flex gap-4 items-center">
+                                <div className="stat-icon" style={{ width: 48, height: 48, background: 'var(--bg-glass)', color: 'var(--primary-400)' }}>
+                                    <int.icon size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold">{int.name}</h4>
+                                    <p className="text-xs text-muted">{int.desc}</p>
+                                </div>
+                            </div>
+                            <span className={`badge badge-${int.status}`}>{int.status}</span>
+                        </div>
+                        <div className="flex-between pt-4 border-t border-glass">
+                            <button className="btn btn-ghost btn-sm" disabled={int.status === 'inactive'}>Config</button>
+                            <button className="btn btn-primary btn-sm" disabled={int.status === 'active'}>
+                                {int.status === 'inactive' ? 'Connect' : 'Running'}
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };
