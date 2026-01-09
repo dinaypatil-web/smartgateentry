@@ -95,10 +95,24 @@ export const AuthProvider = ({ children }) => {
             }
 
             // Add new role to existing user
+            let newStatus = userData.role === 'superadmin' ? 'approved' : 'pending';
+
+            // Auto-approve if existing admin adds resident role for same society
+            if (userData.role === 'resident' && userData.societyId) {
+                const isAdminForSociety = existingUser.roles.some(r =>
+                    r.role === 'administrator' &&
+                    (r.societyId === userData.societyId || r.societyid === userData.societyId) &&
+                    r.status === 'approved'
+                );
+                if (isAdminForSociety) {
+                    newStatus = 'approved';
+                }
+            }
+
             const newRole = {
                 role: userData.role,
                 societyId: userData.societyId || null,
-                status: userData.role === 'superadmin' ? 'approved' : 'pending',
+                status: newStatus,
                 block: userData.block || null,
                 flatNumber: userData.flatNumber || null,
                 addedAt: new Date().toISOString()
