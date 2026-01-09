@@ -441,6 +441,14 @@ export const DataProvider = ({ children }) => {
         );
     };
 
+    const getPendingSecurity = (societyId) => {
+        return users.filter(user =>
+            user.roles.some(role =>
+                role.role === 'security' && (role.societyId === societyId || role.societyid === societyId) && role.status === 'pending'
+            )
+        );
+    };
+
     // Generic CRUD handlers
     const addDataItem = async (collection, data) => {
         const newItem = await storageApi.addData(collection, data);
@@ -545,6 +553,7 @@ export const DataProvider = ({ children }) => {
         getSecurityBySociety,
         getPendingAdministrators,
         getPendingResidents,
+        getPendingSecurity,
 
         // Refresh
         refreshData

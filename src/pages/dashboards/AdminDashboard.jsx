@@ -39,7 +39,10 @@ const sidebarItems = [
 // Dashboard Overview
 const DashboardHome = () => {
     const { currentRole } = useAuth();
-    const { visitors, users, complaints, amenities, bookings } = useData();
+    const {
+        visitors, users, complaints, amenities, bookings,
+        getPendingResidents, getPendingSecurity, updateUser
+    } = useData();
 
     // Stats calculations
     const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
@@ -51,6 +54,40 @@ const DashboardHome = () => {
 
     const resolvedComplaints = societyComplaints.filter(c => c.status === 'resolved');
     const openComplaints = societyComplaints.filter(c => c.status === 'open');
+
+    // Pending approvals for workflow
+    const pendingResidents = getPendingResidents(roleSocietyId);
+    const pendingSecurity = getPendingSecurity(roleSocietyId);
+    const allPending = [
+        ...pendingResidents.map(u => ({ ...u, type: 'resident' })),
+        ...pendingSecurity.map(u => ({ ...u, type: 'security' }))
+    ];
+
+    const handleApproveRole = async (userId, type) => {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            const updatedRoles = user.roles.map(r => {
+                if (r.role === type && (r.societyId === roleSocietyId || r.societyid === roleSocietyId)) {
+                    return { ...r, status: 'approved' };
+                }
+                return r;
+            });
+            await updateUser(userId, { roles: updatedRoles });
+        }
+    };
+
+    const handleRejectRole = async (userId, type) => {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            const updatedRoles = user.roles.map(r => {
+                if (r.role === type && (r.societyId === roleSocietyId || r.societyid === roleSocietyId)) {
+                    return { ...r, status: 'rejected' };
+                }
+                return r;
+            });
+            await updateUser(userId, { roles: updatedRoles });
+        }
+    };
 
     // Visual data for "charts"
     const statsData = [
@@ -77,6 +114,66 @@ const DashboardHome = () => {
                     </div>
                 ))}
             </div>
+
+            {allPending.length > 0 && (
+                <div className="card mb-8 animate-slideUp" style={{ borderLeft: '4px solid var(--warning-500)' }}>
+                    <div className="flex-between mb-4">
+                        <h3 className="font-bold flex items-center gap-2">
+                            <Clock size={18} className="text-warning-500" />
+                            Pending Approvals Needed
+                        </h3>
+                        <span className="badge badge-warning">{allPending.length} pending</span>
+                    </div>
+                    <div className="table-container">
+                        <table className="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role Requested</th>
+                                    <th>Contact</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {allPending.map(user => (
+                                    <tr key={`${user.id}-${user.type}`}>
+                                        <td>
+                                            <div className="flex gap-2 items-center">
+                                                <div className="header-avatar" style={{ width: 32, height: 32, fontSize: '0.7rem' }}>
+                                                    {getInitials(user.name)}
+                                                </div>
+                                                <span className="font-medium text-sm">{user.name}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`text-xs font-bold uppercase ${user.type === 'resident' ? 'text-primary-400' : 'text-secondary-400'}`}>
+                                                {user.type}
+                                            </span>
+                                        </td>
+                                        <td className="text-xs text-muted">{user.email || user.mobile}</td>
+                                        <td>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    className="btn btn-success btn-xs"
+                                                    onClick={() => handleApproveRole(user.id, user.type)}
+                                                >
+                                                    <Check size={12} /> Approve
+                                                </button>
+                                                <button
+                                                    className="btn btn-danger btn-xs"
+                                                    onClick={() => handleRejectRole(user.id, user.type)}
+                                                >
+                                                    <X size={12} /> Reject
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             <div className="grid-2 gap-6">
                 <div className="card">
@@ -142,6 +239,7 @@ const DashboardHome = () => {
                 __html: `
                 .progress-bar { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; }
                 .progress-fill { height: 100%; transition: width 0.5s ease-out; }
+                .btn-xs { padding: 4px 8px; font-size: 10px; height: auto; }
             ` }} />
         </div>
     );
