@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [currentRole, setCurrentRole] = useState(null);
     const [loading, setLoading] = useState(true);
-    const { getUserByEmail, getUserByLoginName, addUser, updateUser, hasSuperadmin } = useData();
+    const { getUserByEmail, getUserByLoginName, getUserById, addUser, updateUser, hasSuperadmin } = useData();
 
     useEffect(() => {
         // Load session from localStorage
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }) => {
             };
 
             const updatedRoles = [...existingUser.roles, newRole];
-            updateUser(existingUser.id, { roles: updatedRoles });
+            await updateUser(existingUser.id, { roles: updatedRoles });
 
             return { success: true, isNewRole: true };
         }
@@ -249,9 +249,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Refresh current user data
-    const refreshCurrentUser = () => {
+    const refreshCurrentUser = async () => {
         if (currentUser) {
-            const freshUser = storage.getUserById(currentUser.id);
+            const freshUser = await getUserById(currentUser.id);
             if (freshUser) {
                 setCurrentUser(freshUser);
                 storage.setCurrentUser(freshUser);
