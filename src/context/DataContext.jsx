@@ -229,15 +229,28 @@ export const DataProvider = ({ children }) => {
         if (!society) return false;
 
         const now = new Date();
-        const fromDate = new Date(society.permissionFromDate);
-        const toDate = new Date(society.permissionToDate);
+        const fromDateVal = society.permissionFromDate || society.permissionfromdate;
+        const toDateVal = society.permissionToDate || society.permissiontodate;
 
-        return now >= fromDate && now <= toDate;
+        if (!fromDateVal || !toDateVal) return false;
+
+        const from = new Date(fromDateVal);
+        const to = new Date(toDateVal);
+
+        return now >= from && now <= to;
+    };
+
+    const ensureSocietyActive = (societyId) => {
+        if (!isSocietyActive(societyId)) {
+            const society = getSocietyById(societyId);
+            throw new Error(`Permission period for "${society?.name || 'this society'}" has ended. Operations are suspended.`);
+        }
     };
 
     // Visitor operations
     const addVisitor = async (visitorData) => {
         try {
+            ensureSocietyActive(visitorData.societyId);
             console.log('DataContext: Adding visitor:', visitorData);
 
             const visitor = {
@@ -276,6 +289,12 @@ export const DataProvider = ({ children }) => {
     };
 
     const updateVisitor = async (id, updates) => {
+        // Find existing visitor to get societyId for check
+        const visitor = visitors.find(v => v.id === id);
+        if (visitor) {
+            ensureSocietyActive(visitor.societyId || visitor.societyid);
+        }
+
         if (storageApi.isUsingOnlineStorage()) {
             await storageApi.updateVisitor(id, updates);
         } else {
@@ -301,6 +320,7 @@ export const DataProvider = ({ children }) => {
 
     // Notice operations
     const addNotice = async (noticeData) => {
+        ensureSocietyActive(noticeData.societyId);
         const notice = {
             id: storage.generateId(),
             ...noticeData,
@@ -330,6 +350,7 @@ export const DataProvider = ({ children }) => {
 
     // Pre-approval operations
     const addPreApproval = async (data) => {
+        ensureSocietyActive(data.societyId);
         const preApproval = {
             id: storage.generateId(),
             ...data,
@@ -346,6 +367,11 @@ export const DataProvider = ({ children }) => {
     };
 
     const updatePreApproval = async (id, updates) => {
+        const pre = preApprovals.find(p => p.id === id);
+        if (pre) {
+            ensureSocietyActive(pre.societyId || pre.societyid);
+        }
+
         if (storageApi.isUsingOnlineStorage()) {
             await storageApi.updatePreApproval(id, updates);
         } else {

@@ -52,6 +52,10 @@ const toDb = (data) => {
             mapped['amenityid'] = data[key];
         } else if (key === 'isGateAllowed') {
             mapped['isgateallowed'] = data[key];
+        } else if (key === 'permissionFromDate') {
+            mapped['permissionfromdate'] = data[key];
+        } else if (key === 'permissionToDate') {
+            mapped['permissiontodate'] = data[key];
         } else {
             // Default: convert to lowercase
             mapped[key.toLowerCase()] = data[key];
@@ -88,14 +92,13 @@ const fromDb = (data) => {
         const lowerKey = key.toLowerCase();
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
 
-        // Priority: camelCase -> lowercase -> snake_case
-        if (mapped[key] === undefined) {
-            if (mapped[lowerKey] !== undefined) {
+        // Priority: Map from DB keys if camelCase key is missing, null, or undefined
+        if (mapped[key] === undefined || mapped[key] === null) {
+            if (mapped[lowerKey] !== undefined && mapped[lowerKey] !== null) {
                 mapped[key] = mapped[lowerKey];
-                delete mapped[lowerKey]; // Remove the lowercase version to avoid confusion
-            } else if (mapped[snakeKey] !== undefined) {
+                // Keep the lowercase version for compatibility but ensure camelCase is set
+            } else if (mapped[snakeKey] !== undefined && mapped[snakeKey] !== null) {
                 mapped[key] = mapped[snakeKey];
-                delete mapped[snakeKey]; // Remove the snake_case version to avoid confusion
             }
         }
     });

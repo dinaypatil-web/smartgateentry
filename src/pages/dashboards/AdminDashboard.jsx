@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
+import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
 
 const sidebarItems = [
     {
@@ -728,8 +729,15 @@ const VisitorLogPage = () => {
 
 // Main Dashboard Layout
 const AdminDashboard = () => {
+    const { currentRole } = useAuth();
+    const { isSocietyActive, getSocietyById } = useData();
+
+    const isActive = isSocietyActive(currentRole?.societyId);
+    const society = getSocietyById(currentRole?.societyId);
+
     return (
         <div className="app-container">
+            {!isActive && <InactiveSocietyOverlay societyName={society?.name} />}
             <Sidebar items={sidebarItems} basePath="/admin" />
             <div className="main-content">
                 <Header title="Administrator Dashboard" />

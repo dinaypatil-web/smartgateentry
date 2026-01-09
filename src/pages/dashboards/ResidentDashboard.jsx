@@ -17,6 +17,7 @@ import { formatDateTime, getInitials } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
 import NoticeForm from '../../components/NoticeForm';
 import InviteForm from '../../components/InviteForm';
+import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
 
 const sidebarItems = [
     {
@@ -594,10 +595,13 @@ const BlockedPage = () => {
 
 // Main Dashboard Layout
 const ResidentDashboard = () => {
-    const { currentUser, currentRole, triggerSOS } = useData();
+    const { currentUser, currentRole, triggerSOS, isSocietyActive, getSocietyById } = useData();
     const [isSOSActive, setIsSOSActive] = useState(false);
     const [sosTimer, setSosTimer] = useState(null);
     const [sosProgress, setSosProgress] = useState(0);
+
+    const isActive = isSocietyActive(currentRole?.societyId);
+    const society = getSocietyById(currentRole?.societyId);
 
     const startSOSTimer = () => {
         setSosProgress(0);
@@ -628,6 +632,7 @@ const ResidentDashboard = () => {
 
     return (
         <div className="app-container">
+            {!isActive && <InactiveSocietyOverlay societyName={society?.name} />}
             <Sidebar items={sidebarItems} basePath="/resident" />
             <div className="main-content">
                 <Header title="Resident Dashboard" />

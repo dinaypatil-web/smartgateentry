@@ -144,8 +144,8 @@ const SocietiesPage = () => {
             setFormData({
                 name: society.name,
                 address: society.address,
-                permissionFromDate: society.permissionFromDate?.split('T')[0] || '',
-                permissionToDate: society.permissionToDate?.split('T')[0] || ''
+                permissionFromDate: (society.permissionFromDate || society.permissionfromdate)?.split('T')[0] || '',
+                permissionToDate: (society.permissionToDate || society.permissiontodate)?.split('T')[0] || ''
             });
         } else {
             resetForm();
@@ -220,8 +220,11 @@ const SocietiesPage = () => {
                             <tbody>
                                 {societies.map(society => {
                                     const now = new Date();
-                                    const from = new Date(society.permissionFromDate);
-                                    const to = new Date(society.permissionToDate);
+                                    const fromDateVal = society.permissionFromDate || society.permissionfromdate;
+                                    const toDateVal = society.permissionToDate || society.permissiontodate;
+
+                                    const from = new Date(fromDateVal);
+                                    const to = new Date(toDateVal);
                                     const isActive = now >= from && now <= to;
 
                                     return (
@@ -231,7 +234,7 @@ const SocietiesPage = () => {
                                             <td className="text-sm">
                                                 <div className="flex gap-2" style={{ alignItems: 'center' }}>
                                                     <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
-                                                    {formatDate(society.permissionFromDate)} - {formatDate(society.permissionToDate)}
+                                                    {formatDate(society.permissionFromDate || society.permissionfromdate)} - {formatDate(society.permissionToDate || society.permissiontodate)}
                                                 </div>
                                             </td>
                                             <td>
@@ -682,7 +685,7 @@ const DataBackupPage = () => {
         setIsProcessing(true);
         try {
             const result = storageUtils.restoreFromBackup(restoreConfirm, true);
-            
+
             if (result.success) {
                 setBackupStatus({
                     type: 'success',
@@ -723,7 +726,7 @@ const DataBackupPage = () => {
             <div className="alert alert-info mb-6">
                 <AlertTriangle size={18} />
                 <div>
-                    <strong>Important:</strong> Always create a backup before making changes or restoring data. 
+                    <strong>Important:</strong> Always create a backup before making changes or restoring data.
                     An automatic backup will be created before any restore operation.
                 </div>
             </div>
@@ -824,13 +827,13 @@ const DataBackupPage = () => {
                 message={
                     <div>
                         <p style={{ marginBottom: 'var(--space-4)' }}>
-                            Are you sure you want to restore data from this backup? 
+                            Are you sure you want to restore data from this backup?
                             This will replace ALL current data with the backup data.
                         </p>
                         {restoreConfirm && (
-                            <div style={{ 
-                                background: 'var(--bg-glass)', 
-                                padding: 'var(--space-3)', 
+                            <div style={{
+                                background: 'var(--bg-glass)',
+                                padding: 'var(--space-3)',
                                 borderRadius: 'var(--radius-md)',
                                 fontSize: 'var(--font-size-sm)'
                             }}>

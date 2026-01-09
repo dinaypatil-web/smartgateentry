@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import NoticeBoard from '../../components/NoticeBoard';
 import { formatDateTime, getInitials } from '../../utils/validators';
+import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
 
 const sidebarItems = [
     {
@@ -759,8 +760,15 @@ const SOSAlertOverlay = () => {
 
 // Main Dashboard Layout
 const SecurityDashboard = () => {
+    const { currentRole } = useAuth();
+    const { isSocietyActive, getSocietyById } = useData();
+
+    const isActive = isSocietyActive(currentRole?.societyId);
+    const society = getSocietyById(currentRole?.societyId);
+
     return (
         <div className="app-container">
+            {!isActive && <InactiveSocietyOverlay societyName={society?.name} />}
             <Sidebar items={sidebarItems} basePath="/security" />
             <div className="main-content">
                 <Header title="Security Dashboard" />
