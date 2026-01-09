@@ -9,8 +9,9 @@ import { getInitials, getRoleLabel } from '../utils/validators';
 const Header = ({ title }) => {
     const navigate = useNavigate();
     const { currentUser, currentRole, logout } = useAuth();
-    const { getSocietyById } = useData();
+    const { getSocietyById, triggerSOS } = useData();
     const { toggleMobileSidebar } = useUI();
+    const [isTriggeringSOS, setIsTriggeringSOS] = useState(false);
 
     const [showDropdown, setShowDropdown] = useState(false);
 
@@ -25,6 +26,22 @@ const Header = ({ title }) => {
     const handleSwitchRole = () => {
         navigate('/select-role');
         setShowDropdown(false);
+    };
+
+    const handleTriggerSOS = async () => {
+        if (window.confirm('SEND EMERGENCY SOS ALERT? This will notify all security personnel immediately.')) {
+            try {
+                setIsTriggeringSOS(true);
+                const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+                await triggerSOS(currentUser.id, roleSocietyId, `Emergency SOS triggered by ${currentUser.name} (${currentRole.role})`);
+                alert('SOS Alert Sent to Security Team!');
+            } catch (error) {
+                console.error('Failed to trigger SOS:', error);
+                alert('Failed to send SOS alert. Please try again or contact security directly.');
+            } finally {
+                setIsTriggeringSOS(false);
+            }
+        }
     };
 
     return (
@@ -47,14 +64,11 @@ const Header = ({ title }) => {
                 <button
                     className="btn btn-danger btn-sm pulse"
                     style={{ borderRadius: 'var(--radius-full)', fontWeight: 'bold' }}
-                    onClick={() => {
-                        if (window.confirm('SEND EMERGENCY SOS ALERT? This will notify all security personnel.')) {
-                            alert('SOS Alert Sent to Security Team!');
-                        }
-                    }}
+                    onClick={handleTriggerSOS}
+                    disabled={isTriggeringSOS}
                 >
                     <AlertTriangle size={18} />
-                    SOS
+                    {isTriggeringSOS ? 'SENDING...' : 'SOS'}
                 </button>
                 <div className="dropdown">
                     <button

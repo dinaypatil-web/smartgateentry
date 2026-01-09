@@ -14,7 +14,7 @@ import {
     Ticket, Search, Megaphone, AlertTriangle, Bell, ShieldAlert, Car, Contact, LogIn, LogOut
 } from 'lucide-react';
 import NoticeBoard from '../../components/NoticeBoard';
-import { formatDateTime, getInitials } from '../../utils/validators';
+import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
 
 const sidebarItems = [
@@ -577,20 +577,31 @@ const SOSAlertOverlay = () => {
 
     if (activeAlerts.length === 0) return null;
 
-    const getResidentInfo = (residentId) => {
-        const resident = users.find(u => u.id === residentId);
-        if (!resident) return { name: 'Unknown', flat: 'N/A' };
-        const role = resident.roles.find(r => r.role === 'resident' && r.societyId === currentRole?.societyId);
+    const getUserInfo = (userId) => {
+        const user = users.find(u => u.id === userId);
+        if (!user) return { name: 'Unknown User', details: 'N/A', role: 'Unknown' };
+
+        const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+        const role = user.roles.find(r => (r.societyId === roleSocietyId || r.societyid === roleSocietyId));
+
+        let details = 'N/A';
+        if (role?.role === 'resident') {
+            details = `Flat ${role.block || ''}-${role.flatNumber || ''}`;
+        } else {
+            details = getRoleLabel(role?.role);
+        }
+
         return {
-            name: resident.name,
-            flat: `${role?.block || ''}-${role?.flatNumber || ''}`
+            name: user.name,
+            details: details,
+            role: role?.role || 'User'
         };
     };
 
     return (
         <div className="sos-overlay-container">
             {activeAlerts.map(alert => {
-                const resident = getResidentInfo(alert.residentId);
+                const sender = getUserInfo(alert.residentId); // Note: residentId is used as generic userId in triggerSOS
                 return (
                     <div key={alert.id} className="sos-emergency-card animate-pulse">
                         <div className="sos-emergency-header">
@@ -603,16 +614,16 @@ const SOSAlertOverlay = () => {
 
                         <div className="sos-resident-details">
                             <div className="sos-detail-item">
-                                <span className="label">RESIDENT</span>
-                                <span className="value">{resident.name}</span>
+                                <span className="label">SENT BY</span>
+                                <span className="value">{sender.name}</span>
                             </div>
                             <div className="sos-detail-item">
-                                <span className="label">LOCATION</span>
-                                <span className="value">Flat {resident.flat}</span>
+                                <span className="label">LOCATION / ROLE</span>
+                                <span className="value">{sender.details}</span>
                             </div>
                             <div className="sos-detail-item">
                                 <span className="label">TIME</span>
-                                <span className="value">{new Date(alert.createdAt).toLocaleTimeString()}</span>
+                                <span className="value">{new Date(alert.createdAt || alert.createdat).toLocaleTimeString()}</span>
                             </div>
                         </div>
 
