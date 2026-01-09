@@ -38,7 +38,7 @@ const sidebarItems = [
 
 // Dashboard Overview
 const DashboardHome = () => {
-    const { currentRole } = useAuth();
+    const { currentRole, currentUser, refreshCurrentUser } = useAuth();
     const {
         visitors, users, complaints, amenities, bookings,
         getPendingResidents, getPendingSecurity, updateUser
@@ -73,6 +73,9 @@ const DashboardHome = () => {
                 return r;
             });
             await updateUser(userId, { roles: updatedRoles });
+            if (userId === currentUser?.id) {
+                await refreshCurrentUser();
+            }
         }
     };
 
@@ -86,6 +89,9 @@ const DashboardHome = () => {
                 return r;
             });
             await updateUser(userId, { roles: updatedRoles });
+            if (userId === currentUser?.id) {
+                await refreshCurrentUser();
+            }
         }
     };
 
