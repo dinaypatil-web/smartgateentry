@@ -496,10 +496,12 @@ export const DataProvider = ({ children }) => {
         return result;
     };
 
-    const resolveSOS = async (alertId) => {
-        simulateNotification('EMAIL', 'Admin', `SOS Alert ${alertId} has been resolved by Security.`);
+    const resolveSOS = async (alertId, resolvedBy) => {
+        const user = users.find(u => u.id === resolvedBy);
+        simulateNotification('EMAIL', 'Admin', `SOS Alert ${alertId} has been resolved by ${user?.name || resolvedBy}.`);
         return updateDataItem('sos_alerts', alertId, {
             status: 'resolved',
+            resolvedBy: resolvedBy,
             resolvedAt: new Date().toISOString()
         });
     };

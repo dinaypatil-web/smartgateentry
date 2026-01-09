@@ -540,8 +540,9 @@ const SOSAlertOverlay = () => {
     const { sosAlerts, users, resolveSOS } = useData();
 
     const activeAlerts = sosAlerts.filter(a => {
-        const societyId = a.societyId || a.societyid;
-        return societyId === currentRole?.societyId && a.status === 'active';
+        const sId = a.societyId || a.societyid;
+        const currentSId = currentRole?.societyId || currentRole?.societyid;
+        return sId === currentSId && a.status === 'active';
     });
 
     // Sound effect for SOS
@@ -601,9 +602,11 @@ const SOSAlertOverlay = () => {
     return (
         <div className="sos-overlay-container">
             {activeAlerts.map(alert => {
-                const sender = getUserInfo(alert.residentId); // Note: residentId is used as generic userId in triggerSOS
+                const alertId = alert.id || alert.id; // Usually same but for clarity
+                const senderId = alert.residentId || alert.residentid;
+                const sender = getUserInfo(senderId);
                 return (
-                    <div key={alert.id} className="sos-emergency-card animate-pulse">
+                    <div key={alertId} className="sos-emergency-card animate-pulse">
                         <div className="sos-emergency-header">
                             <AlertTriangle size={48} className="sos-blink-icon" />
                             <div>
@@ -629,10 +632,10 @@ const SOSAlertOverlay = () => {
 
                         <button
                             className="sos-resolve-btn"
-                            onClick={() => resolveSOS(alert.id, currentUser.id)}
+                            onClick={() => resolveSOS(alertId, currentUser.id)}
                         >
                             <ShieldAlert size={20} />
-                            MARK AS RESPONDED
+                            MARK AS ATTENDED
                         </button>
                     </div>
                 );
