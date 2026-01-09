@@ -42,11 +42,12 @@ const DashboardHome = () => {
     const { visitors, users, complaints, amenities, bookings } = useData();
 
     // Stats calculations
-    const societyVisitors = visitors.filter(v => (v.societyId === currentRole.societyId || v.societyid === currentRole.societyId));
-    const societyResidents = users.filter(u => u.roles.some(r => r.role === 'resident' && r.societyId === currentRole.societyId));
-    const societyComplaints = complaints.filter(c => (c.societyId === currentRole.societyId || c.societyid === currentRole.societyId));
-    const societyAmenities = amenities.filter(a => (a.societyId === currentRole.societyId || a.societyid === currentRole.societyId));
-    const societyBookings = bookings.filter(b => (b.societyId === currentRole.societyId || b.societyid === currentRole.societyId));
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+    const societyVisitors = visitors.filter(v => (v.societyId === roleSocietyId || v.societyid === roleSocietyId));
+    const societyResidents = users.filter(u => u.roles.some(r => r.role === 'resident' && (r.societyId === roleSocietyId || r.societyid === roleSocietyId)));
+    const societyComplaints = complaints.filter(c => (c.societyId === roleSocietyId || c.societyid === roleSocietyId));
+    const societyAmenities = amenities.filter(a => (a.societyId === roleSocietyId || a.societyid === roleSocietyId));
+    const societyBookings = bookings.filter(b => (b.societyId === roleSocietyId || b.societyid === roleSocietyId));
 
     const resolvedComplaints = societyComplaints.filter(c => c.status === 'resolved');
     const openComplaints = societyComplaints.filter(c => c.status === 'open');
@@ -252,8 +253,9 @@ const ResidentsPage = () => {
     const { users, updateUser, deleteUserById, getSocietyById } = useData();
     const [deleteConfirm, setDeleteConfirm] = useState(null);
 
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
     const residents = users.filter(u =>
-        u.roles.some(r => r.role === 'resident' && r.societyId === currentRole?.societyId)
+        u.roles.some(r => r.role === 'resident' && (r.societyId === roleSocietyId || r.societyid === roleSocietyId))
     );
 
     const handleApprove = async (userId, roleIndex) => {
@@ -317,7 +319,7 @@ const ResidentsPage = () => {
                             <tbody>
                                 {residents.map(resident => {
                                     const roleIndex = resident.roles.findIndex(r =>
-                                        r.role === 'resident' && r.societyId === currentRole?.societyId
+                                        r.role === 'resident' && (r.societyId === roleSocietyId || r.societyid === roleSocietyId)
                                     );
                                     const role = resident.roles[roleIndex];
 

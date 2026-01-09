@@ -411,19 +411,19 @@ export const DataProvider = ({ children }) => {
 
     const getAdministratorsBySociety = (societyId) => {
         return users.filter(u =>
-            u.roles.some(r => r.role === 'administrator' && r.societyId === societyId)
+            u.roles.some(r => r.role === 'administrator' && (r.societyId === societyId || r.societyid === societyId))
         );
     };
 
     const getResidentsBySociety = (societyId) => {
         return users.filter(u =>
-            u.roles.some(r => r.role === 'resident' && r.societyId === societyId)
+            u.roles.some(r => r.role === 'resident' && (r.societyId === societyId || r.societyid === societyId))
         );
     };
 
     const getSecurityBySociety = (societyId) => {
         return users.filter(u =>
-            u.roles.some(r => r.role === 'security' && r.societyId === societyId)
+            u.roles.some(r => r.role === 'security' && (r.societyId === societyId || r.societyid === societyId))
         );
     };
 
@@ -436,7 +436,7 @@ export const DataProvider = ({ children }) => {
     const getPendingResidents = (societyId) => {
         return users.filter(user =>
             user.roles.some(role =>
-                role.role === 'resident' && role.societyId === societyId && role.status === 'pending'
+                role.role === 'resident' && (role.societyId === societyId || role.societyid === societyId) && role.status === 'pending'
             )
         );
     };
