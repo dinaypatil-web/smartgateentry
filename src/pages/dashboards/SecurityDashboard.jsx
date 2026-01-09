@@ -761,14 +761,15 @@ const SOSAlertOverlay = () => {
 // Main Dashboard Layout
 const SecurityDashboard = () => {
     const { currentRole } = useAuth();
-    const { isSocietyActive, getSocietyById } = useData();
+    const { isSocietyActive, getSocietyById, loading } = useData();
 
-    const isActive = isSocietyActive(currentRole?.societyId);
-    const society = getSocietyById(currentRole?.societyId);
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+    const isActive = isSocietyActive(roleSocietyId);
+    const society = getSocietyById(roleSocietyId);
 
     return (
         <div className="app-container">
-            {!isActive && <InactiveSocietyOverlay societyName={society?.name} />}
+            {!loading && !isActive && <InactiveSocietyOverlay societyName={society?.name} />}
             <Sidebar items={sidebarItems} basePath="/security" />
             <div className="main-content">
                 <Header title="Security Dashboard" />

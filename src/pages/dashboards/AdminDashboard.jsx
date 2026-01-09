@@ -730,14 +730,15 @@ const VisitorLogPage = () => {
 // Main Dashboard Layout
 const AdminDashboard = () => {
     const { currentRole } = useAuth();
-    const { isSocietyActive, getSocietyById } = useData();
+    const { isSocietyActive, getSocietyById, loading } = useData();
 
-    const isActive = isSocietyActive(currentRole?.societyId);
-    const society = getSocietyById(currentRole?.societyId);
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+    const isActive = isSocietyActive(roleSocietyId);
+    const society = getSocietyById(roleSocietyId);
 
     return (
         <div className="app-container">
-            {!isActive && <InactiveSocietyOverlay societyName={society?.name} />}
+            {!loading && !isActive && <InactiveSocietyOverlay societyName={society?.name} />}
             <Sidebar items={sidebarItems} basePath="/admin" />
             <div className="main-content">
                 <Header title="Administrator Dashboard" />

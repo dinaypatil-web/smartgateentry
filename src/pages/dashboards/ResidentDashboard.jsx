@@ -595,13 +595,14 @@ const BlockedPage = () => {
 
 // Main Dashboard Layout
 const ResidentDashboard = () => {
-    const { currentUser, currentRole, triggerSOS, isSocietyActive, getSocietyById } = useData();
+    const { currentUser, currentRole, triggerSOS, isSocietyActive, getSocietyById, loading } = useData();
     const [isSOSActive, setIsSOSActive] = useState(false);
     const [sosTimer, setSosTimer] = useState(null);
     const [sosProgress, setSosProgress] = useState(0);
 
-    const isActive = isSocietyActive(currentRole?.societyId);
-    const society = getSocietyById(currentRole?.societyId);
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+    const isActive = isSocietyActive(roleSocietyId);
+    const society = getSocietyById(roleSocietyId);
 
     const startSOSTimer = () => {
         setSosProgress(0);
@@ -632,7 +633,7 @@ const ResidentDashboard = () => {
 
     return (
         <div className="app-container">
-            {!isActive && <InactiveSocietyOverlay societyName={society?.name} />}
+            {!loading && !isActive && <InactiveSocietyOverlay societyName={society?.name} />}
             <Sidebar items={sidebarItems} basePath="/resident" />
             <div className="main-content">
                 <Header title="Resident Dashboard" />

@@ -225,14 +225,21 @@ export const DataProvider = ({ children }) => {
 
     // Check if society is within permission date range
     const isSocietyActive = (societyId) => {
+        // If no societyId is provided, we can't deactivate anything based on it
+        if (!societyId) return true;
+
         const society = getSocietyById(societyId);
-        if (!society) return false;
+
+        // If societies list is empty or society not found, we assume active for now
+        // to prevent blocking UI while data is still loading
+        if (societies.length === 0 || !society) return true;
 
         const now = new Date();
         const fromDateVal = society.permissionFromDate || society.permissionfromdate;
         const toDateVal = society.permissionToDate || society.permissiontodate;
 
-        if (!fromDateVal || !toDateVal) return false;
+        // If no date range is set, default to active
+        if (!fromDateVal || !toDateVal) return true;
 
         const from = new Date(fromDateVal);
         const to = new Date(toDateVal);

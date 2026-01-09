@@ -67,7 +67,7 @@ const toDb = (data) => {
 
 // Helper to map lowercase DB keys back to camelCase for App
 const fromDb = (data) => {
-    if (!data) return data;
+    if (data === null || data === undefined) return data;
 
     // Known camelCase keys in app
     const camelKeys = [
@@ -85,9 +85,19 @@ const fromDb = (data) => {
         return data.map(item => fromDb(item));
     }
 
-    const mapped = { ...data };
+    // If it's not an object (primitive), return as is
+    if (typeof data !== 'object') {
+        return data;
+    }
 
-    // Check if we have lowercase versions of camelKeys and map them back
+    const mapped = {};
+
+    // First, recursively map all values
+    Object.keys(data).forEach(key => {
+        mapped[key] = fromDb(data[key]);
+    });
+
+    // Then, handle top-level key mapping for this object
     camelKeys.forEach(key => {
         const lowerKey = key.toLowerCase();
         const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -96,14 +106,12 @@ const fromDb = (data) => {
         if (mapped[key] === undefined || mapped[key] === null) {
             if (mapped[lowerKey] !== undefined && mapped[lowerKey] !== null) {
                 mapped[key] = mapped[lowerKey];
-                // Keep the lowercase version for compatibility but ensure camelCase is set
             } else if (mapped[snakeKey] !== undefined && mapped[snakeKey] !== null) {
                 mapped[key] = mapped[snakeKey];
             }
         }
     });
 
-    console.log('Supabase API: Mapping DB data back to camelCase:', mapped);
     return mapped;
 };
 
