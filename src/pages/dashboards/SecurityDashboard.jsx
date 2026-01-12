@@ -632,7 +632,18 @@ const SOSAlertOverlay = () => {
 
                         <button
                             className="sos-resolve-btn"
-                            onClick={() => resolveSOS(alertId, currentUser.id)}
+                            onClick={async () => {
+                                try {
+                                    if (!alertId) {
+                                        alert('Error: Alert ID is missing. Cannot mark as attended. Please contact support.');
+                                        return;
+                                    }
+                                    await resolveSOS(alertId, currentUser.id);
+                                } catch (error) {
+                                    console.error('Failed to resolve SOS:', error);
+                                    alert('Failed to update alert status. Please check your connection and try again.');
+                                }
+                            }}
                         >
                             <ShieldAlert size={20} />
                             MARK AS ATTENDED
@@ -735,7 +746,7 @@ const SOSAlertOverlay = () => {
                 .sos-detail-item .label {
                     font-size: 0.75rem;
                     font-weight: 700;
-                    color: var(--text-muted);
+                    color: #6b7280;
                     margin-bottom: 0.25rem;
                     letter-spacing: 0.05rem;
                 }
@@ -743,7 +754,7 @@ const SOSAlertOverlay = () => {
                 .sos-detail-item .value {
                     font-size: 1.5rem;
                     font-weight: 800;
-                    color: var(--text-main);
+                    color: #111827;
                 }
 
                 .sos-resolve-btn {
