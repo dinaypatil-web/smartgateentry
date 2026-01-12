@@ -488,9 +488,11 @@ const AdministratorsPage = () => {
 
 // My Roles Management (for adding superadmin as admin/resident of societies)
 const MyRolesPage = () => {
-    const { currentUser, signup, refreshCurrentUser } = useAuth();
+    const { currentUser, signup, refreshCurrentUser, removeRole, updateRole } = useAuth();
     const { societies, getSocietyById } = useData();
     const [showModal, setShowModal] = useState(false);
+    const [editingRole, setEditingRole] = useState(null);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [formData, setFormData] = useState({
         role: 'administrator',
         societyId: '',
@@ -501,36 +503,73 @@ const MyRolesPage = () => {
 
     const myRoles = currentUser?.roles || [];
 
+    const handleOpenModal = (role = null) => {
+        if (role) {
+            setEditingRole(role);
+            setFormData({
+                role: role.role,
+                societyId: role.societyId || '',
+                block: role.block || '',
+                flatNumber: role.flatNumber || ''
+            });
+        } else {
+            setEditingRole(null);
+            setFormData({ role: 'administrator', societyId: '', block: '', flatNumber: '' });
+        }
+        setShowModal(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        const result = await signup({
-            name: currentUser.name,
-            email: currentUser.email,
-            mobile: currentUser.mobile,
-            password: currentUser.password,
-            role: formData.role,
-            societyId: formData.societyId,
-            block: formData.role === 'resident' ? formData.block : null,
-            flatNumber: formData.role === 'resident' ? formData.flatNumber : null
-        }, currentUser);
+        if (editingRole) {
+            const result = await updateRole(editingRole.role, editingRole.societyId, {
+                block: formData.role === 'resident' ? formData.block : null,
+                flatNumber: formData.role === 'resident' ? formData.flatNumber : null
+            });
 
-        if (!result.success) {
-            setError(result.error);
-            return;
+            if (!result.success) {
+                setError(result.error);
+                return;
+            }
+        } else {
+            const result = await signup({
+                name: currentUser.name,
+                email: currentUser.email,
+                mobile: currentUser.mobile,
+                password: currentUser.password,
+                role: formData.role,
+                societyId: formData.societyId,
+                block: formData.role === 'resident' ? formData.block : null,
+                flatNumber: formData.role === 'resident' ? formData.flatNumber : null
+            }, currentUser);
+
+            if (!result.success) {
+                setError(result.error);
+                return;
+            }
         }
 
         refreshCurrentUser();
         setShowModal(false);
+        setEditingRole(null);
         setFormData({ role: 'administrator', societyId: '', block: '', flatNumber: '' });
+    };
+
+    const handleRemoveRole = async (role) => {
+        const result = removeRole(role.role, role.societyId);
+        if (!result.success) {
+            setError(result.error);
+        }
+        setDeleteConfirm(null);
     };
 
     return (
         <div>
             <div className="flex-between mb-6">
                 <h2>My Roles</h2>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                <button className="btn btn-primary" onClick={() => handleOpenModal()}>
                     <Plus size={18} />
                     Add Role
                 </button>
@@ -545,21 +584,48 @@ const MyRolesPage = () => {
                                 <th>Society</th>
                                 <th>Details</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {myRoles.map((role, index) => {
                                 const society = role.societyId ? getSocietyById(role.societyId) : null;
+                                const isSuperAdminRole = role.role === 'superadmin';
                                 return (
                                     <tr key={index}>
                                         <td className="font-medium">{getRoleLabel(role.role)}</td>
-                                        <td>{society?.name || 'Global'}</td>
+                                        <td>{society?.name || (isSuperAdminRole ? 'System Wide' : 'Unknown')}</td>
                                         <td className="text-muted">
                                             {role.role === 'resident' && role.block ?
                                                 `Block ${role.block}, Flat ${role.flatNumber}` : '—'}
                                         </td>
                                         <td>
                                             <StatusBadge status={role.status} />
+                                        </td>
+                                        <td>
+                                            <div className="table-actions">
+                                                {!isSuperAdminRole && (
+                                                    <>
+                                                        {role.role === 'resident' && (
+                                                            <button
+                                                                className="btn btn-ghost btn-icon btn-sm"
+                                                                onClick={() => handleOpenModal(role)}
+                                                                title="Edit"
+                                                            >
+                                                                <Edit size={16} />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            className="btn btn-ghost btn-icon btn-sm"
+                                                            onClick={() => setDeleteConfirm(role)}
+                                                            title="Remove Role"
+                                                            style={{ color: 'var(--error-500)' }}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -571,40 +637,48 @@ const MyRolesPage = () => {
 
             <Modal
                 isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                title="Add New Role"
+                onClose={() => { setShowModal(false); setEditingRole(null); }}
+                title={editingRole ? 'Edit Role Details' : 'Add New Role'}
             >
                 <form onSubmit={handleSubmit}>
                     {error && <div className="alert alert-error">{error}</div>}
 
-                    <div className="form-group">
-                        <label className="form-label">Role Type</label>
-                        <select
-                            className="form-select"
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        >
-                            <option value="administrator">Administrator</option>
-                            <option value="resident">Resident</option>
-                        </select>
-                    </div>
+                    {!editingRole ? (
+                        <>
+                            <div className="form-group">
+                                <label className="form-label">Role Type</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.role}
+                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                >
+                                    <option value="administrator">Administrator</option>
+                                    <option value="resident">Resident</option>
+                                </select>
+                            </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Society</label>
-                        <select
-                            className="form-select"
-                            value={formData.societyId}
-                            onChange={(e) => setFormData({ ...formData, societyId: e.target.value })}
-                            required
-                        >
-                            <option value="">Select a society</option>
-                            {societies.map(society => (
-                                <option key={society.id} value={society.id}>
-                                    {society.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                            <div className="form-group">
+                                <label className="form-label">Society</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.societyId}
+                                    onChange={(e) => setFormData({ ...formData, societyId: e.target.value })}
+                                    required
+                                >
+                                    <option value="">Select a society</option>
+                                    {societies.map(society => (
+                                        <option key={society.id} value={society.id}>
+                                            {society.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="alert alert-info mb-4">
+                            Editing <strong>{getRoleLabel(editingRole.role)}</strong> role for <strong>{editingRole.societyId ? getSocietyById(editingRole.societyId)?.name : 'Global'}</strong>
+                        </div>
+                    )}
 
                     {formData.role === 'resident' && (
                         <div className="grid-2">
@@ -634,15 +708,26 @@ const MyRolesPage = () => {
                     )}
 
                     <div className="flex gap-3 mt-6">
-                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                        <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditingRole(null); }}>
                             Cancel
                         </button>
                         <button type="submit" className="btn btn-primary flex-1">
-                            Add Role
+                            {editingRole ? 'Save Changes' : 'Add Role'}
                         </button>
                     </div>
                 </form>
             </Modal>
+
+            {/* Remove Role Confirmation */}
+            <ConfirmModal
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={() => handleRemoveRole(deleteConfirm)}
+                title="Remove Role"
+                message={`Are you sure you want to remove the role "${getRoleLabel(deleteConfirm?.role)}" for ${deleteConfirm?.societyId ? getSocietyById(deleteConfirm.societyId)?.name : 'Global'}? You will lose access to features associated with this role.`}
+                confirmText="Remove Role"
+                variant="danger"
+            />
         </div>
     );
 };

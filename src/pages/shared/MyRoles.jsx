@@ -4,13 +4,14 @@ import { useData } from '../../context/DataContext';
 import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
-import { Plus, Trash2, Building2, UserCheck, Shield, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Building2, UserCheck, Shield, Users } from 'lucide-react';
 import { getRoleLabel } from '../../utils/validators';
 
 const MyRoles = () => {
-    const { currentUser, signup, refreshCurrentUser, removeRole } = useAuth();
+    const { currentUser, signup, refreshCurrentUser, removeRole, updateRole } = useAuth();
     const { societies, getSocietyById } = useData();
     const [showModal, setShowModal] = useState(false);
+    const [editingRole, setEditingRole] = useState(null);
     const [formData, setFormData] = useState({
         role: 'resident',
         societyId: '',
@@ -22,29 +23,58 @@ const MyRoles = () => {
 
     const myRoles = currentUser?.roles || [];
 
+    const handleOpenModal = (role = null) => {
+        if (role) {
+            setEditingRole(role);
+            setFormData({
+                role: role.role,
+                societyId: role.societyId || '',
+                block: role.block || '',
+                flatNumber: role.flatNumber || ''
+            });
+        } else {
+            setEditingRole(null);
+            setFormData({ role: 'resident', societyId: '', block: '', flatNumber: '' });
+        }
+        setShowModal(true);
+    };
+
     const resetForm = () => {
         setFormData({ role: 'resident', societyId: '', block: '', flatNumber: '' });
         setError('');
+        setEditingRole(null);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        const result = await signup({
-            name: currentUser.name,
-            email: currentUser.email,
-            mobile: currentUser.mobile,
-            password: currentUser.password,
-            role: formData.role,
-            societyId: formData.societyId,
-            block: formData.role === 'resident' ? formData.block : null,
-            flatNumber: formData.role === 'resident' ? formData.flatNumber : null
-        }, currentUser);
+        if (editingRole) {
+            const result = await updateRole(editingRole.role, editingRole.societyId, {
+                block: formData.role === 'resident' ? formData.block : null,
+                flatNumber: formData.role === 'resident' ? formData.flatNumber : null
+            });
 
-        if (!result.success) {
-            setError(result.error);
-            return;
+            if (!result.success) {
+                setError(result.error);
+                return;
+            }
+        } else {
+            const result = await signup({
+                name: currentUser.name,
+                email: currentUser.email,
+                mobile: currentUser.mobile,
+                password: currentUser.password,
+                role: formData.role,
+                societyId: formData.societyId,
+                block: formData.role === 'resident' ? formData.block : null,
+                flatNumber: formData.role === 'resident' ? formData.flatNumber : null
+            }, currentUser);
+
+            if (!result.success) {
+                setError(result.error);
+                return;
+            }
         }
 
         refreshCurrentUser();
@@ -55,7 +85,6 @@ const MyRoles = () => {
     const handleRemoveRole = (role) => {
         const result = removeRole(role.role, role.societyId);
         if (!result.success) {
-            // Should prompt/handle error, but for now we'll assume success or silent fail
             console.error(result.error);
         }
         setDeleteConfirm(null);
@@ -65,7 +94,7 @@ const MyRoles = () => {
         <div>
             <div className="flex-between mb-6">
                 <h2>My Roles</h2>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                <button className="btn btn-primary" onClick={() => handleOpenModal()}>
                     <Plus size={18} />
                     Add Role
                 </button>
@@ -86,9 +115,6 @@ const MyRoles = () => {
                         <tbody>
                             {myRoles.map((role, index) => {
                                 const society = role.societyId ? getSocietyById(role.societyId) : null;
-                                // Allow removing a role only if they have more than 1 role or if they want to delete their account effectively?
-                                // Requirement says "add/remove roles any time".
-
                                 const isSuperAdminRole = role.role === 'superadmin';
 
                                 return (
@@ -111,17 +137,29 @@ const MyRoles = () => {
                                             <StatusBadge status={role.status} />
                                         </td>
                                         <td>
-                                            {!isSuperAdminRole && ( // Superadmin uses resign button elsewhere, usually
-                                                <button
-                                                    className="btn btn-ghost btn-sm"
-                                                    onClick={() => setDeleteConfirm(role)}
-                                                    style={{ color: 'var(--error-500)' }}
-                                                    title="Remove Role"
-                                                >
-                                                    <Trash2 size={14} />
-                                                    Remove
-                                                </button>
-                                            )}
+                                            <div className="table-actions">
+                                                {!isSuperAdminRole && (
+                                                    <>
+                                                        {role.role === 'resident' && (
+                                                            <button
+                                                                className="btn btn-ghost btn-icon btn-sm"
+                                                                onClick={() => handleOpenModal(role)}
+                                                                title="Edit"
+                                                            >
+                                                                <Edit size={16} />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            className="btn btn-ghost btn-icon btn-sm"
+                                                            onClick={() => setDeleteConfirm(role)}
+                                                            style={{ color: 'var(--error-500)' }}
+                                                            title="Remove Role"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -131,43 +169,51 @@ const MyRoles = () => {
                 </div>
             </div>
 
-            {/* Add Role Modal */}
+            {/* Add/Edit Role Modal */}
             <Modal
                 isOpen={showModal}
                 onClose={() => { setShowModal(false); resetForm(); }}
-                title="Request New Role"
+                title={editingRole ? 'Edit Role Details' : 'Request New Role'}
             >
                 <form onSubmit={handleSubmit}>
                     {error && <div className="alert alert-error">{error}</div>}
 
-                    <div className="form-group">
-                        <label className="form-label">Role Type</label>
-                        <select
-                            className="form-select"
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        >
-                            <option value="resident">Resident</option>
-                            <option value="administrator">Administrator</option>
-                        </select>
-                    </div>
+                    {!editingRole ? (
+                        <>
+                            <div className="form-group">
+                                <label className="form-label">Role Type</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.role}
+                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                >
+                                    <option value="resident">Resident</option>
+                                    <option value="administrator">Administrator</option>
+                                </select>
+                            </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Society</label>
-                        <select
-                            className="form-select"
-                            value={formData.societyId}
-                            onChange={(e) => setFormData({ ...formData, societyId: e.target.value })}
-                            required
-                        >
-                            <option value="">Select a society</option>
-                            {societies.map(society => (
-                                <option key={society.id} value={society.id}>
-                                    {society.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                            <div className="form-group">
+                                <label className="form-label">Society</label>
+                                <select
+                                    className="form-select"
+                                    value={formData.societyId}
+                                    onChange={(e) => setFormData({ ...formData, societyId: e.target.value })}
+                                    required
+                                >
+                                    <option value="">Select a society</option>
+                                    {societies.map(society => (
+                                        <option key={society.id} value={society.id}>
+                                            {society.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="alert alert-info mb-4">
+                            Editing <strong>{getRoleLabel(editingRole.role)}</strong> role for <strong>{editingRole.societyId ? getSocietyById(editingRole.societyId)?.name : 'Global'}</strong>
+                        </div>
+                    )}
 
                     {formData.role === 'resident' && (
                         <div className="grid-2">
@@ -201,7 +247,7 @@ const MyRoles = () => {
                             Cancel
                         </button>
                         <button type="submit" className="btn btn-primary flex-1">
-                            Submit Request
+                            {editingRole ? 'Save Changes' : 'Submit Request'}
                         </button>
                     </div>
                 </form>

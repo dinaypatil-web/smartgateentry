@@ -302,6 +302,34 @@ export const AuthProvider = ({ children }) => {
         return { success: true };
     };
 
+    const updateRole = async (targetRole, societyId, newDetails) => {
+        if (!currentUser) return { success: false, error: 'Not logged in' };
+
+        const updatedRoles = currentUser.roles.map(r => {
+            if (r.role === targetRole && r.societyId === societyId) {
+                return { ...r, ...newDetails };
+            }
+            return r;
+        });
+
+        // Update user in storage
+        await updateUser(currentUser.id, { roles: updatedRoles });
+
+        // Update local state
+        const freshUser = { ...currentUser, roles: updatedRoles };
+        setCurrentUser(freshUser);
+        storage.setCurrentUser(freshUser);
+
+        // If the updated role was the CURRENT active role, refresh it
+        if (currentRole && currentRole.role === targetRole && currentRole.societyId === societyId) {
+            const updatedCurrentRole = updatedRoles.find(r => r.role === targetRole && r.societyId === societyId);
+            setCurrentRole(updatedCurrentRole);
+            storage.setCurrentRole(updatedCurrentRole);
+        }
+
+        return { success: true };
+    };
+
     // Refresh current user data
     const refreshCurrentUser = async () => {
         if (currentUser) {
@@ -330,7 +358,8 @@ export const AuthProvider = ({ children }) => {
         refreshCurrentUser,
         isAuthenticated: !!currentUser,
         hasSuperadmin,
-        removeRole
+        removeRole,
+        updateRole
     };
 
     return (
