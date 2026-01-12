@@ -350,6 +350,7 @@ const SocietiesPage = () => {
 // Administrators Management
 const AdministratorsPage = () => {
     const { users, updateUser, societies, getSocietyById } = useData();
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
 
     const administrators = users.filter(u =>
         u.roles.some(r => r.role === 'administrator')
@@ -371,6 +372,18 @@ const AdministratorsPage = () => {
             updatedRoles[roleIndex] = { ...updatedRoles[roleIndex], status: 'rejected' };
             await updateUser(userId, { roles: updatedRoles });
         }
+    };
+
+    const handleRemove = async () => {
+        if (!deleteConfirm) return;
+        const { userId, roleIndex } = deleteConfirm;
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            // Remove the administrator role from the user's roles array
+            const updatedRoles = user.roles.filter((_, index) => index !== roleIndex);
+            await updateUser(userId, { roles: updatedRoles });
+        }
+        setDeleteConfirm(null);
     };
 
     return (
@@ -414,26 +427,40 @@ const AdministratorsPage = () => {
                                                         <StatusBadge status={role.status} />
                                                     </td>
                                                     <td>
-                                                        {role.status === 'pending' ? (
-                                                            <div className="table-actions">
-                                                                <button
-                                                                    className="btn btn-success btn-sm"
-                                                                    onClick={() => handleApprove(admin.id, roleIndex)}
-                                                                >
-                                                                    <Check size={14} />
-                                                                    Approve
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-danger btn-sm"
-                                                                    onClick={() => handleReject(admin.id, roleIndex)}
-                                                                >
-                                                                    <X size={14} />
-                                                                    Reject
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-muted text-sm">—</span>
-                                                        )}
+                                                        <div className="table-actions">
+                                                            {role.status === 'pending' && (
+                                                                <>
+                                                                    <button
+                                                                        className="btn btn-success btn-sm"
+                                                                        onClick={() => handleApprove(admin.id, roleIndex)}
+                                                                    >
+                                                                        <Check size={14} />
+                                                                        Approve
+                                                                    </button>
+                                                                    <button
+                                                                        className="btn btn-danger btn-sm"
+                                                                        onClick={() => handleReject(admin.id, roleIndex)}
+                                                                    >
+                                                                        <X size={14} />
+                                                                        Reject
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            <button
+                                                                className="btn btn-ghost btn-sm"
+                                                                onClick={() => setDeleteConfirm({
+                                                                    userId: admin.id,
+                                                                    roleIndex,
+                                                                    adminName: admin.name,
+                                                                    societyName: society?.name || 'Unknown'
+                                                                })}
+                                                                style={{ color: 'var(--error-500)' }}
+                                                                title="Remove Administrator"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                                Remove
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );
@@ -444,6 +471,17 @@ const AdministratorsPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Remove Administrator Confirmation */}
+            <ConfirmModal
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={handleRemove}
+                title="Remove Administrator"
+                message={`Are you sure you want to remove "${deleteConfirm?.adminName}" as an administrator for "${deleteConfirm?.societyName}"? They will lose all administrator privileges for this society.`}
+                confirmText="Remove"
+                variant="danger"
+            />
         </div>
     );
 };
@@ -476,7 +514,7 @@ const MyRolesPage = () => {
             societyId: formData.societyId,
             block: formData.role === 'resident' ? formData.block : null,
             flatNumber: formData.role === 'resident' ? formData.flatNumber : null
-        });
+        }, currentUser);
 
         if (!result.success) {
             setError(result.error);

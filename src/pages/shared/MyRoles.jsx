@@ -40,7 +40,7 @@ const MyRoles = () => {
             societyId: formData.societyId,
             block: formData.role === 'resident' ? formData.block : null,
             flatNumber: formData.role === 'resident' ? formData.flatNumber : null
-        });
+        }, currentUser);
 
         if (!result.success) {
             setError(result.error);

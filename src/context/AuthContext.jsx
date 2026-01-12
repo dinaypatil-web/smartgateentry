@@ -79,9 +79,58 @@ export const AuthProvider = ({ children }) => {
         storage.setCurrentRole(role);
     };
 
-    const signup = async (userData) => {
+    const signup = async (userData, addedByUser = null) => {
         // Check if email already exists
         const existingUser = await getUserByEmail(userData.email);
+
+        // Determine if the role should be auto-approved based on who is adding it
+        const getAutoApprovalStatus = (role, societyId) => {
+            // Superadmin role during signup is always auto-approved
+            if (role === 'superadmin') return 'approved';
+
+            // If addedByUser is provided, check their privileges
+            if (addedByUser) {
+                // Superadmin adding any role = auto-approve
+                const isSuperadmin = addedByUser.roles?.some(r =>
+                    r.role === 'superadmin' &&
+                    r.status === 'approved' &&
+                    !addedByUser.isResigned
+                );
+                if (isSuperadmin) return 'approved';
+
+                // Administrator adding resident/security for their society = auto-approve
+                if (role === 'resident' || role === 'security') {
+                    const isAdminForSociety = addedByUser.roles?.some(r =>
+                        r.role === 'administrator' &&
+                        r.status === 'approved' &&
+                        (r.societyId === societyId || r.societyid === societyId)
+                    );
+                    if (isAdminForSociety) return 'approved';
+                }
+            }
+
+            // If user is adding a role to themselves, check their own roles
+            if (existingUser) {
+                // Superadmin adding role to themselves = auto-approve
+                const isSuperadmin = existingUser.roles.some(r =>
+                    r.role === 'superadmin' &&
+                    r.status === 'approved' &&
+                    !existingUser.isResigned
+                );
+                if (isSuperadmin) return 'approved';
+
+                // Admin adding resident/security to themselves = auto-approve
+                if ((role === 'resident' || role === 'security') && societyId) {
+                    const isApprovedAdmin = existingUser.roles.some(r =>
+                        r.role === 'administrator' &&
+                        r.status === 'approved'
+                    );
+                    if (isApprovedAdmin) return 'approved';
+                }
+            }
+
+            return 'pending';
+        };
 
         if (existingUser) {
             // User exists, add new role
@@ -94,20 +143,7 @@ export const AuthProvider = ({ children }) => {
                 return { success: false, error: 'You already have this role for this society' };
             }
 
-            // Add new role to existing user
-            let newStatus = userData.role === 'superadmin' ? 'approved' : 'pending';
-
-            // Auto-approve if existing admin adds resident role for same society
-            if (userData.role === 'resident' && userData.societyId) {
-                const isAdminForSociety = existingUser.roles.some(r =>
-                    r.role === 'administrator' &&
-                    (r.societyId === userData.societyId || r.societyid === userData.societyId) &&
-                    r.status === 'approved'
-                );
-                if (isAdminForSociety) {
-                    newStatus = 'approved';
-                }
-            }
+            const newStatus = getAutoApprovalStatus(userData.role, userData.societyId);
 
             const newRole = {
                 role: userData.role,
@@ -115,7 +151,8 @@ export const AuthProvider = ({ children }) => {
                 status: newStatus,
                 block: userData.block || null,
                 flatNumber: userData.flatNumber || null,
-                addedAt: new Date().toISOString()
+                addedAt: new Date().toISOString(),
+                addedBy: addedByUser?.id || null
             };
 
             const updatedRoles = [...existingUser.roles, newRole];
@@ -129,6 +166,8 @@ export const AuthProvider = ({ children }) => {
             return { success: false, error: 'A superadmin already exists' };
         }
 
+        const newStatus = getAutoApprovalStatus(userData.role, userData.societyId);
+
         const newUser = {
             name: userData.name,
             email: userData.email,
@@ -139,10 +178,11 @@ export const AuthProvider = ({ children }) => {
             roles: [{
                 role: userData.role,
                 societyId: userData.societyId || null,
-                status: userData.role === 'superadmin' ? 'approved' : 'pending',
+                status: newStatus,
                 block: userData.block || null,
                 flatNumber: userData.flatNumber || null,
-                addedAt: new Date().toISOString()
+                addedAt: new Date().toISOString(),
+                addedBy: addedByUser?.id || null
             }],
             isResigned: false
         };
