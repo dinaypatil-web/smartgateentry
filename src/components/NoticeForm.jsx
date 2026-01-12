@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Megaphone, AlertCircle, Send, X, Clock } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Megaphone, AlertCircle, Send, X, Clock, Paperclip, Link as LinkIcon, Image as ImageIcon, FileText, Trash2, Plus } from 'lucide-react';
 
 const NoticeForm = ({ onSubmit, onCancel }) => {
     const [formData, setFormData] = useState({
@@ -7,15 +7,56 @@ const NoticeForm = ({ onSubmit, onCancel }) => {
         content: '',
         priority: 'normal'
     });
+    const [attachments, setAttachments] = useState([]);
+    const [showLinkInput, setShowLinkInput] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('');
+    const fileInputRef = useRef(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File too large. Max 5MB.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const type = file.type.startsWith('image/') ? 'image' : 'pdf';
+            setAttachments([...attachments, {
+                type,
+                url: e.target.result,
+                name: file.name
+            }]);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const handleAddLink = () => {
+        if (!linkUrl) return;
+        setAttachments([...attachments, {
+            type: 'link',
+            url: linkUrl,
+            name: linkUrl
+        }]);
+        setLinkUrl('');
+        setShowLinkInput(false);
+    };
+
+    const removeAttachment = (index) => {
+        setAttachments(attachments.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(formData);
+        onSubmit({ ...formData, attachments });
     };
 
     return (
@@ -78,6 +119,72 @@ const NoticeForm = ({ onSubmit, onCancel }) => {
                         ></textarea>
                     </div>
 
+                    <div className="form-group mb-4">
+                        <label className="form-label">Attachments</label>
+
+                        {attachments.length > 0 && (
+                            <div className="attachment-list mb-3">
+                                {attachments.map((att, index) => (
+                                    <div key={index} className="attachment-item">
+                                        <div className="flex gap-2 items-center overflow-hidden">
+                                            {att.type === 'image' && <ImageIcon size={16} className="text-primary-500" />}
+                                            {att.type === 'pdf' && <FileText size={16} className="text-error-500" />}
+                                            {att.type === 'link' && <LinkIcon size={16} className="text-info-500" />}
+                                            <span className="text-sm truncate">{att.name}</span>
+                                        </div>
+                                        <button type="button" onClick={() => removeAttachment(index)} className="text-muted hover:text-error-500">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex gap-2">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*,application/pdf"
+                                onChange={handleFileChange}
+                                style={{ display: 'none' }}
+                            />
+
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <Paperclip size={14} />
+                                Attach File
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`btn btn-sm ${showLinkInput ? 'btn-primary' : 'btn-secondary'}`}
+                                onClick={() => setShowLinkInput(!showLinkInput)}
+                            >
+                                <LinkIcon size={14} />
+                                Add Link
+                            </button>
+                        </div>
+
+                        {showLinkInput && (
+                            <div className="flex gap-2 mt-2 animate-fadeIn">
+                                <input
+                                    type="url"
+                                    className="form-input text-sm"
+                                    placeholder="https://example.com"
+                                    value={linkUrl}
+                                    onChange={(e) => setLinkUrl(e.target.value)}
+                                />
+                                <button type="button" className="btn btn-primary btn-sm" onClick={handleAddLink}>
+                                    <Plus size={14} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="flex gap-3 justify-end pt-4">
                         <button type="button" className="btn btn-secondary" onClick={onCancel}>
                             <X size={18} />
@@ -116,6 +223,27 @@ const NoticeForm = ({ onSubmit, onCancel }) => {
                             </div>
                             <div className="preview-body">
                                 {formData.content || 'Your notice content goes here. Start typing in the form to see it exactly as the residents will see it.'}
+
+                                {attachments.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-border">
+                                        <div className="text-xs font-semibold text-muted mb-2 uppercase tracking-wider">Attachments</div>
+                                        <div className="space-y-2">
+                                            {attachments.map((att, index) => (
+                                                <div key={index} className="p-2 bg-background rounded-lg border border-border flex gap-3 items-center">
+                                                    <div className="w-8 h-8 rounded bg-soft flex items-center justify-center flex-shrink-0">
+                                                        {att.type === 'image' && <ImageIcon size={16} />}
+                                                        {att.type === 'pdf' && <FileText size={16} />}
+                                                        {att.type === 'link' && <LinkIcon size={16} />}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm font-medium truncate">{att.name}</div>
+                                                        <div className="text-xs text-muted capitalize">{att.type}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -263,6 +391,21 @@ const NoticeForm = ({ onSubmit, onCancel }) => {
                     border-radius: 4px;
                     font-size: 0.6rem;
                     font-weight: 700;
+                }
+
+                .attachment-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+                .attachment-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.5rem;
+                    background: var(--bg-soft);
+                    border-radius: var(--radius-md);
+                    border: 1px solid var(--border-color);
                 }
 
                 .preview-body {

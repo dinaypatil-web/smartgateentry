@@ -65,6 +65,7 @@ ALTER TABLE notices ADD COLUMN IF NOT EXISTS priority text DEFAULT 'normal';
 ALTER TABLE notices ADD COLUMN IF NOT EXISTS societyid text;
 ALTER TABLE notices ADD COLUMN IF NOT EXISTS createdat text;
 ALTER TABLE notices ADD COLUMN IF NOT EXISTS createdby text;
+ALTER TABLE notices ADD COLUMN IF NOT EXISTS attachments jsonb DEFAULT '[]'::jsonb;
 
 -- 5. PRE-APPROVALS TABLE (Stored as 'preapprovals')
 CREATE TABLE IF NOT EXISTS preapprovals (id text PRIMARY KEY);

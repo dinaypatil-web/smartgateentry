@@ -1,4 +1,4 @@
-import { Megaphone, Trash2 } from 'lucide-react';
+import { Megaphone, Trash2, Link as LinkIcon, Image as ImageIcon, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import EmptyState from './EmptyState';
@@ -38,6 +38,33 @@ const NoticeBoard = ({ isAdmin = false }) => {
                         <div className="text-secondary leading-relaxed">
                             {notice.content}
                         </div>
+
+                        {notice.attachments && notice.attachments.length > 0 && (
+                            <div className="mt-4 grid gap-2">
+                                {notice.attachments.map((att, index) => (
+                                    <a
+                                        key={index}
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-3 bg-soft rounded-lg border border-border flex gap-3 items-center hover:bg-muted transition-colors"
+                                        style={{ textDecoration: 'none', color: 'inherit', background: 'var(--bg-tertiary)' }}
+                                    >
+                                        <div className="w-10 h-10 rounded bg-white shadow-sm flex items-center justify-center flex-shrink-0 text-primary-500">
+                                            {att.type === 'image' && <ImageIcon size={20} />}
+                                            {att.type === 'pdf' && <FileText size={20} className="text-error-500" />}
+                                            {att.type === 'link' && <LinkIcon size={20} className="text-info-500" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium truncate text-sm">{att.name}</div>
+                                            <div className="text-xs text-muted flex items-center gap-1">
+                                                {att.type === 'link' ? 'Open Link' : 'View Attachment'}
+                                            </div>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        )}
                         {notice.priority === 'urgent' && (
                             <div className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-error-500 uppercase tracking-wider">
                                 <span className="flex h-2 w-2 rounded-full bg-error-500 animate-pulse"></span>
