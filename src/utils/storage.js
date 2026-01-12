@@ -13,7 +13,8 @@ const STORAGE_KEYS = {
     AMENITIES: 'sge_amenities',
     BOOKINGS: 'sge_bookings',
     STAFF: 'sge_staff',
-    PAYMENTS: 'sge_payments'
+    PAYMENTS: 'sge_payments',
+    SOS_ALERTS: 'sge_sos_alerts'
 };
 
 // Initialize default data structure
@@ -39,6 +40,7 @@ const initializeStorage = () => {
     if (!localStorage.getItem(STORAGE_KEYS.BOOKINGS)) { setItem(STORAGE_KEYS.BOOKINGS, []); }
     if (!localStorage.getItem(STORAGE_KEYS.STAFF)) { setItem(STORAGE_KEYS.STAFF, []); }
     if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) { setItem(STORAGE_KEYS.PAYMENTS, []); }
+    if (!localStorage.getItem(STORAGE_KEYS.SOS_ALERTS)) { setItem(STORAGE_KEYS.SOS_ALERTS, []); }
 };
 
 // Generic storage operations
@@ -267,7 +269,8 @@ const getCollectionKey = (collection) => {
         'amenities': STORAGE_KEYS.AMENITIES,
         'bookings': STORAGE_KEYS.BOOKINGS,
         'staff': STORAGE_KEYS.STAFF,
-        'payments': STORAGE_KEYS.PAYMENTS
+        'payments': STORAGE_KEYS.PAYMENTS,
+        'sos_alerts': STORAGE_KEYS.SOS_ALERTS
     };
     return map[collection];
 };

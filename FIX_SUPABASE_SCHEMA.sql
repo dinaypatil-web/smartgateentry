@@ -156,6 +156,7 @@ ALTER TABLE sos_alerts ADD COLUMN IF NOT EXISTS societyid text;
 ALTER TABLE sos_alerts ADD COLUMN IF NOT EXISTS status text DEFAULT 'active';
 ALTER TABLE sos_alerts ADD COLUMN IF NOT EXISTS message text;
 ALTER TABLE sos_alerts ADD COLUMN IF NOT EXISTS resolvedby text;
+ALTER TABLE sos_alerts ADD COLUMN IF NOT EXISTS resolvedat text;
 ALTER TABLE sos_alerts ADD COLUMN IF NOT EXISTS createdat text;
 ALTER TABLE sos_alerts ADD COLUMN IF NOT EXISTS createdby text;
 

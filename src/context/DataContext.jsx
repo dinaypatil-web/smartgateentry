@@ -481,12 +481,14 @@ export const DataProvider = ({ children }) => {
 
     const triggerSOS = async (userId, societyId, message) => {
         const alertData = {
+            id: storage.generateId(),
             residentId: userId,
             societyId: societyId,
             message: message || 'Emergency SOS Alert!',
             status: 'active',
             createdAt: new Date().toISOString()
         };
+        console.log('DataContext: Triggering SOS ALERT:', alertData);
         const result = await addDataItem('sos_alerts', alertData);
 
         // Simulate immediate WhatsApp/SMS alerts to security
