@@ -9,6 +9,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
     const [error, setError] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [preferBack, setPreferBack] = useState(useBackCamera);
+    const [availableCameras, setAvailableCameras] = useState([]);
+    const [currentCameraInfo, setCurrentCameraInfo] = useState('');
 
     const startCameraWithBasicConstraints = useCallback(async () => {
         try {
@@ -60,12 +62,50 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
             const videoInputs = devices.filter(d => d.kind === 'videoinput');
             if (!videoInputs.length) return null;
 
-            // Try to find labels that indicate back/rear/environment
-            const match = videoInputs.find(d => d.label && /back|rear|environment/i.test(d.label));
-            if (match) return match.deviceId;
+            // Update available cameras state
+            const cameraInfo = videoInputs.map(d => ({ 
+                deviceId: d.deviceId, 
+                label: d.label || 'Unknown Camera',
+                groupId: d.groupId 
+            }));
+            setAvailableCameras(cameraInfo);
 
-            // Fallback: prefer last device for rear, first for front
-            return prefer ? videoInputs[videoInputs.length - 1].deviceId : videoInputs[0].deviceId;
+            console.log('Available video devices:', cameraInfo);
+
+            // Enhanced back camera detection for mobile devices
+            if (prefer) {
+                // Priority 1: Look for explicit back/rear/environment in label
+                const backCamera = videoInputs.find(d => 
+                    d.label && /back|rear|environment/i.test(d.label)
+                );
+                if (backCamera) {
+                    console.log('Found back camera by label:', backCamera);
+                    setCurrentCameraInfo(`Using: ${backCamera.label || 'Back Camera'}`);
+                    return backCamera.deviceId;
+                }
+
+                // Priority 2: Look for 'user' facing cameras and avoid them
+                const nonUserCameras = videoInputs.filter(d => 
+                    !d.label || !/user|front|selfie/i.test(d.label)
+                );
+                if (nonUserCameras.length > 0) {
+                    console.log('Found non-user camera:', nonUserCameras[0]);
+                    setCurrentCameraInfo(`Using: ${nonUserCameras[0].label || 'Back Camera'}`);
+                    return nonUserCameras[0].deviceId;
+                }
+
+                // Priority 3: Use last camera (often back on mobile)
+                if (videoInputs.length > 1) {
+                    console.log('Using last camera as fallback:', videoInputs[videoInputs.length - 1]);
+                    setCurrentCameraInfo(`Using: ${videoInputs[videoInputs.length - 1].label || 'Back Camera'}`);
+                    return videoInputs[videoInputs.length - 1].deviceId;
+                }
+            }
+
+            // Fallback: Return first available camera
+            console.log('Using first available camera:', videoInputs[0]);
+            setCurrentCameraInfo(`Using: ${videoInputs[0].label || 'Default Camera'}`);
+            return videoInputs[0].deviceId;
         } catch (e) {
             console.error('Device enumeration failed', e);
             return null;
@@ -84,14 +124,21 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
             }
 
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            console.log('Device detection:', { isMobile, userAgent: navigator.userAgent });
 
+            // Enhanced constraints for mobile back camera
             const constraints = {
                 video: {
                     width: { ideal: isMobile ? 1280 : 640 },
                     height: { ideal: isMobile ? 720 : 480 },
-                    facingMode: prefer ? 'environment' : 'user'
+                    facingMode: prefer ? { exact: 'environment' } : 'user',
+                    // Additional constraints for better mobile camera handling
+                    aspectRatio: { ideal: isMobile ? 16/9 : 4/3 },
+                    frameRate: { ideal: isMobile ? 30 : 25 }
                 }
             };
+
+            console.log('Camera constraints:', constraints);
 
             try {
                 // Try facingMode first
@@ -100,9 +147,12 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                     videoRef.current.srcObject = mediaStream;
                     setStream(mediaStream);
                     setIsStreaming(true);
+                    console.log('Camera started successfully with facingMode:', prefer ? 'environment' : 'user');
                 }
             } catch (err) {
                 console.warn('Facing mode failed, attempting deviceId fallback', err);
+                
+                // Fallback: Get device ID and try again
                 const deviceId = await findPreferredDeviceId(prefer);
                 if (deviceId) {
                     try {
@@ -110,14 +160,18 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                             video: {
                                 deviceId: { exact: deviceId },
                                 width: { ideal: isMobile ? 1280 : 640 },
-                                height: { ideal: isMobile ? 720 : 480 }
+                                height: { ideal: isMobile ? 720 : 480 },
+                                aspectRatio: { ideal: isMobile ? 16/9 : 4/3 },
+                                frameRate: { ideal: isMobile ? 30 : 25 }
                             }
                         };
+                        console.log('Trying device constraints:', deviceConstraints);
                         const mediaStream2 = await navigator.mediaDevices.getUserMedia(deviceConstraints);
                         if (videoRef.current) {
                             videoRef.current.srcObject = mediaStream2;
                             setStream(mediaStream2);
                             setIsStreaming(true);
+                            console.log('Camera started with deviceId fallback:', deviceId);
                             return;
                         }
                     } catch (err2) {
@@ -271,7 +325,9 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                 </div>
             ) : photo ? (
                 <>
-                    <img src={photo} alt="Captured" className="camera-preview" style={{ transform: preferBack ? 'none' : 'scaleX(-1)' }} />
+                    <div style={{ textAlign: 'center', marginBottom: 'var(--space-3)' }}>
+                        <img src={photo} alt="Captured" className="camera-preview" style={{ transform: preferBack ? 'none' : 'scaleX(-1)' }} />
+                    </div>
                     <div className="camera-controls">
                         <button className="btn btn-secondary" onClick={retakePhoto}>
                             <RotateCcw size={18} />
@@ -289,6 +345,19 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                 </>
             ) : (
                 <>
+                    {currentCameraInfo && (
+                        <div style={{ 
+                            textAlign: 'center', 
+                            marginBottom: 'var(--space-3)', 
+                            fontSize: '0.875rem', 
+                            color: 'var(--color-muted)',
+                            background: 'var(--bg-glass)',
+                            padding: 'var(--space-2)',
+                            borderRadius: 'var(--radius-md)'
+                        }}>
+                            📷 {currentCameraInfo}
+                        </div>
+                    )}
                     <video
                         ref={videoRef}
                         className="camera-video"
@@ -316,10 +385,16 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                     <div className="camera-controls">
                         {isStreaming ? (
                             <>
-                                <button className="btn btn-outline" onClick={() => { const next = !preferBack; setPreferBack(next); switchCamera(next); }}>
-                                    <RotateCcw size={18} />
-                                    {preferBack ? ' Switch to Front' : ' Switch to Rear'}
-                                </button>
+                                {availableCameras.length > 1 && (
+                                    <button 
+                                        className="btn btn-outline" 
+                                        onClick={() => { const next = !preferBack; setPreferBack(next); switchCamera(next); }}
+                                        title={availableCameras.length > 1 ? `Switch to ${preferBack ? 'Front' : 'Rear'} Camera` : 'Switch Camera'}
+                                    >
+                                        <RotateCcw size={18} />
+                                        {preferBack ? 'Front' : 'Rear'}
+                                    </button>
+                                )}
                                 <button className="btn btn-primary" onClick={capturePhoto}>
                                     <Camera size={18} />
                                     Capture
@@ -335,10 +410,16 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                                     <Camera size={18} />
                                     Start Camera
                                 </button>
-                                <button className="btn btn-outline" onClick={() => setPreferBack(p => !p)}>
-                                    <RotateCcw size={18} />
-                                    {preferBack ? 'Front' : 'Rear'}
-                                </button>
+                                {availableCameras.length > 1 && (
+                                    <button 
+                                        className="btn btn-outline" 
+                                        onClick={() => setPreferBack(p => !p)}
+                                        title="Switch Camera"
+                                    >
+                                        <RotateCcw size={18} />
+                                        {preferBack ? 'Front' : 'Rear'}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
