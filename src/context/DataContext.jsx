@@ -498,25 +498,54 @@ export const DataProvider = ({ children }) => {
         return result;
     };
 
-    const resolveSOS = async (alertId, resolvedBy) => {
+    const resolveSOS = async (alertId, resolvedBy, residentId = null) => {
         // Optimistic update for instant UI response
         const resolvedAt = new Date().toISOString();
         setSosAlerts(prev => prev.map(alert =>
-            alert.id === alertId ? { ...alert, status: 'resolved', resolvedBy, resolvedAt } : alert
+            (alert.id === alertId || (residentId && (alert.residentId === residentId || alert.residentid === residentId)))
+                ? { ...alert, status: 'resolved', resolvedBy, resolvedAt }
+                : alert
         ));
 
         const user = users.find(u => u.id === resolvedBy);
         simulateNotification('EMAIL', 'Admin', `SOS Alert ${alertId} has been resolved by ${user?.name || resolvedBy}.`);
 
         try {
-            return await updateDataItem('sos_alerts', alertId, {
-                status: 'resolved',
-                resolvedBy: resolvedBy,
-                resolvedAt: resolvedAt
-            });
+            // Primary attempt: Resolve by ID
+            let result = null;
+            if (alertId) {
+                result = await updateDataItem('sos_alerts', alertId, {
+                    status: 'resolved',
+                    resolvedBy: resolvedBy,
+                    resolvedAt: resolvedAt
+                });
+            }
+
+            // Fallback: If no ID or update didn't return data (zombie alert?), clear all active for resident
+            // This acts as a robust 'Clear Queue' mechanism
+            if ((!result || Object.keys(result).length === 0) && residentId) {
+                console.log('DataContext: Primary resolve failed/incomplete. Attempting fallback cleanup by residentId:', residentId);
+
+                // Get active alerts for this resident - requires scanning loaded alerts or DB
+                // Since this is a fallback, we'll try to update any we find in local state that match
+                const activeForResident = sosAlerts.filter(a =>
+                    (a.residentId === residentId || a.residentid === residentId) && a.status === 'active'
+                );
+
+                for (const alert of activeForResident) {
+                    if (alert.id) {
+                        await updateDataItem('sos_alerts', alert.id, {
+                            status: 'resolved',
+                            resolvedBy: resolvedBy,
+                            resolvedAt: resolvedAt
+                        });
+                    }
+                }
+            }
+
+            return result;
         } catch (error) {
             console.error('Failed to resolve SOS in backend:', error);
-            // Revert optimistic update on failure (optional, or rely on refreshData to eventually fix)
             await refreshData();
             throw error;
         }

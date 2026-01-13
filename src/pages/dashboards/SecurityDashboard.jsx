@@ -634,11 +634,17 @@ const SOSAlertOverlay = () => {
                             className="sos-resolve-btn"
                             onClick={async () => {
                                 try {
-                                    if (!alertId) {
-                                        alert('Error: Alert ID is missing. Cannot mark as attended. Please contact support.');
+                                    // Use alert ID if available, otherwise residentId as fallback
+                                    const targetId = alert.id || alert.id;
+                                    const residentId = alert.residentId || alert.residentid;
+
+                                    if (!targetId && !residentId) {
+                                        alert('Error: Invalid alert data. Cannot resolve.');
                                         return;
                                     }
-                                    await resolveSOS(alertId, currentUser.id);
+
+                                    // Pass residentId to resolveSOS as fallback context
+                                    await resolveSOS(targetId, currentUser.id, residentId);
                                 } catch (error) {
                                     console.error('Failed to resolve SOS:', error);
                                     alert('Failed to update alert status. Please check your connection and try again.');
@@ -666,9 +672,10 @@ const SOSAlertOverlay = () => {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    justify-content: center;
+                    justify-content: flex-start; /* Changed from center to allow scrolling */
                     padding: 2rem;
                     gap: 2rem;
+                    overflow-y: auto; /* Enable vertical scrolling */
                 }
 
                 .sos-emergency-card {
