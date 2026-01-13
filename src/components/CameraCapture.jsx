@@ -189,25 +189,60 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
     }, [stream, findPreferredDeviceId]);
 
     const capturePhoto = useCallback(() => {
-        if (!videoRef.current || !canvasRef.current) return;
+        if (!videoRef.current || !canvasRef.current) {
+            console.error('Video or canvas not available');
+            return;
+        }
 
         const video = videoRef.current;
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
+        // Ensure video dimensions are available
+        if (!video.videoWidth || !video.videoHeight) {
+            console.error('Video dimensions not available:', { 
+                videoWidth: video.videoWidth, 
+                videoHeight: video.videoHeight,
+                readyState: video.readyState 
+            });
+            setError('Camera not ready. Please wait for video to load and try again.');
+            return;
+        }
+
+        // Set canvas dimensions to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
-        context.drawImage(video, 0, 0);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-
-        setPhoto(dataUrl);
-        stopCamera();
+        // Enhanced mobile capture with better error handling
+        try {
+            // Draw the current video frame to canvas
+            context.drawImage(video, 0, 0);
+            
+            // Capture with higher quality for mobile
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            console.log('Photo captured successfully, data URL length:', dataUrl.length);
+            setPhoto(dataUrl);
+            
+            // Don't stop camera immediately on mobile - let user review first
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (!isMobile) {
+                // Only stop camera on desktop
+                stopCamera();
+            }
+        } catch (err) {
+            console.error('Photo capture error:', err);
+            setError('Failed to capture photo. Please try again.');
+        }
     }, [stopCamera]);
 
     const retakePhoto = useCallback(() => {
+        console.log('Retaking photo...');
         setPhoto(null);
-        startCamera();
+        // Restart camera after a short delay to ensure proper cleanup
+        setTimeout(() => {
+            startCamera();
+        }, 100);
     }, [startCamera]);
 
     const confirmPhoto = useCallback(() => {
@@ -373,12 +408,24 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                             transform: preferBack ? 'none' : 'scaleX(-1)'
                         }}
                         onLoadedMetadata={() => {
+                            console.log('Video metadata loaded:', {
+                                videoWidth: videoRef.current?.videoWidth,
+                                videoHeight: videoRef.current?.videoHeight,
+                                readyState: videoRef.current?.readyState
+                            });
                             // Ensure video plays properly
                             if (videoRef.current) {
                                 videoRef.current.play().catch(err => {
                                     console.error('Video play error:', err);
                                 });
                             }
+                        }}
+                        onCanPlay={() => {
+                            console.log('Video can play - camera ready for capture');
+                        }}
+                        onError={(e) => {
+                            console.error('Video error:', e);
+                            setError('Video error occurred. Please try again.');
                         }}
                     />
                     <canvas ref={canvasRef} style={{ display: 'none' }} />
