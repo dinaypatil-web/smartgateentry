@@ -1,59 +1,29 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Camera, RotateCcw, Check, X } from 'lucide-react';
 
-const CameraCapture = ({ onCapture, onCancel }) => {
+const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const [stream, setStream] = useState(null);
     const [photo, setPhoto] = useState(null);
     const [error, setError] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
+    const [preferBack, setPreferBack] = useState(useBackCamera);
 
     const startCameraWithBasicConstraints = useCallback(async () => {
         try {
             setError('');
-            const basicConstraints = {
-                video: {
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    facingMode: 'user'
-                }
-            };
-
-            const mediaStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
-
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream;
-                setStream(mediaStream);
-                setIsStreaming(true);
-            }
+            await switchCamera(preferBack);
         } catch (err) {
             console.error('Basic camera error:', err);
             setError('Unable to access camera even with basic settings. Please check your browser permissions and ensure no other app is using the camera.');
         }
-    }, []);
+    }, [preferBack, switchCamera]);
 
     const startCamera = useCallback(async () => {
         try {
             setError('');
-            // Check if device is mobile
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            
-            const constraints = {
-                video: {
-                    width: { ideal: isMobile ? 1280 : 640 },
-                    height: { ideal: isMobile ? 720 : 480 },
-                    facingMode: 'user' // Front camera for selfies
-                }
-            };
-
-            const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream;
-                setStream(mediaStream);
-                setIsStreaming(true);
-            }
+            await switchCamera(preferBack);
         } catch (err) {
             console.error('Camera error:', err);
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
@@ -74,7 +44,7 @@ const CameraCapture = ({ onCapture, onCancel }) => {
                 setError(`Camera access failed: ${err.message || 'Unknown error'}. Please ensure you are using a secure connection (HTTPS) and camera permissions are granted.`);
             }
         }
-    }, []);
+    }, [preferBack, startCameraWithBasicConstraints, switchCamera]);
 
     const stopCamera = useCallback(() => {
         if (stream) {
@@ -83,6 +53,86 @@ const CameraCapture = ({ onCapture, onCancel }) => {
             setIsStreaming(false);
         }
     }, [stream]);
+
+    const findPreferredDeviceId = useCallback(async (prefer) => {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoInputs = devices.filter(d => d.kind === 'videoinput');
+            if (!videoInputs.length) return null;
+
+            // Try to find labels that indicate back/rear/environment
+            const match = videoInputs.find(d => d.label && /back|rear|environment/i.test(d.label));
+            if (match) return match.deviceId;
+
+            // Fallback: prefer last device for rear, first for front
+            return prefer ? videoInputs[videoInputs.length - 1].deviceId : videoInputs[0].deviceId;
+        } catch (e) {
+            console.error('Device enumeration failed', e);
+            return null;
+        }
+    }, []);
+
+    const switchCamera = useCallback(async (prefer) => {
+        try {
+            setError('');
+
+            // Stop any existing stream first
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+                setStream(null);
+                setIsStreaming(false);
+            }
+
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            const constraints = {
+                video: {
+                    width: { ideal: isMobile ? 1280 : 640 },
+                    height: { ideal: isMobile ? 720 : 480 },
+                    facingMode: prefer ? 'environment' : 'user'
+                }
+            };
+
+            try {
+                // Try facingMode first
+                const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                    setStream(mediaStream);
+                    setIsStreaming(true);
+                }
+            } catch (err) {
+                console.warn('Facing mode failed, attempting deviceId fallback', err);
+                const deviceId = await findPreferredDeviceId(prefer);
+                if (deviceId) {
+                    try {
+                        const deviceConstraints = {
+                            video: {
+                                deviceId: { exact: deviceId },
+                                width: { ideal: isMobile ? 1280 : 640 },
+                                height: { ideal: isMobile ? 720 : 480 }
+                            }
+                        };
+                        const mediaStream2 = await navigator.mediaDevices.getUserMedia(deviceConstraints);
+                        if (videoRef.current) {
+                            videoRef.current.srcObject = mediaStream2;
+                            setStream(mediaStream2);
+                            setIsStreaming(true);
+                            return;
+                        }
+                    } catch (err2) {
+                        console.error('DeviceId fallback failed', err2);
+                    }
+                }
+
+                // If fallback also failed, rethrow original error to be handled below
+                throw err;
+            }
+        } catch (err) {
+            console.error('Switch camera error:', err);
+            setError('Unable to switch camera. Please check permissions and try again.');
+        }
+    }, [stream, findPreferredDeviceId]);
 
     const capturePhoto = useCallback(() => {
         if (!videoRef.current || !canvasRef.current) return;
@@ -125,26 +175,11 @@ const CameraCapture = ({ onCapture, onCancel }) => {
         const initializeCamera = async () => {
             try {
                 setError('');
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                
-                const constraints = {
-                    video: {
-                        width: { ideal: isMobile ? 1280 : 640 },
-                        height: { ideal: isMobile ? 720 : 480 },
-                        facingMode: 'user'
-                    }
-                };
+                // Use helper to start camera honoring preferBack
+                await switchCamera(preferBack);
 
-                const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                if (mounted && videoRef.current) {
-                    currentStream = mediaStream;
-                    videoRef.current.srcObject = mediaStream;
-                    setStream(mediaStream);
-                    setIsStreaming(true);
-                } else {
-                    // Component unmounted, stop the stream
-                    mediaStream.getTracks().forEach(track => track.stop());
+                if (!mounted && videoRef.current && videoRef.current.srcObject) {
+                    videoRef.current.srcObject.getTracks().forEach(track => track.stop());
                 }
             } catch (err) {
                 if (mounted) {
@@ -168,7 +203,7 @@ const CameraCapture = ({ onCapture, onCancel }) => {
                     }
                 }
             }
-        };
+        }; 
 
         initializeCamera();
 
@@ -236,7 +271,7 @@ const CameraCapture = ({ onCapture, onCancel }) => {
                 </div>
             ) : photo ? (
                 <>
-                    <img src={photo} alt="Captured" className="camera-preview" style={{ transform: 'scaleX(-1)' }} />
+                    <img src={photo} alt="Captured" className="camera-preview" style={{ transform: preferBack ? 'none' : 'scaleX(-1)' }} />
                     <div className="camera-controls">
                         <button className="btn btn-secondary" onClick={retakePhoto}>
                             <RotateCcw size={18} />
@@ -266,7 +301,7 @@ const CameraCapture = ({ onCapture, onCancel }) => {
                             minHeight: '300px',
                             maxHeight: '60vh',
                             objectFit: 'cover',
-                            transform: 'scaleX(-1)'
+                            transform: preferBack ? 'none' : 'scaleX(-1)'
                         }}
                         onLoadedMetadata={() => {
                             // Ensure video plays properly
@@ -281,6 +316,10 @@ const CameraCapture = ({ onCapture, onCancel }) => {
                     <div className="camera-controls">
                         {isStreaming ? (
                             <>
+                                <button className="btn btn-outline" onClick={() => { const next = !preferBack; setPreferBack(next); switchCamera(next); }}>
+                                    <RotateCcw size={18} />
+                                    {preferBack ? ' Switch to Front' : ' Switch to Rear'}
+                                </button>
                                 <button className="btn btn-primary" onClick={capturePhoto}>
                                     <Camera size={18} />
                                     Capture
@@ -291,10 +330,16 @@ const CameraCapture = ({ onCapture, onCancel }) => {
                                 </button>
                             </>
                         ) : (
-                            <button className="btn btn-primary" onClick={startCamera}>
-                                <Camera size={18} />
-                                Start Camera
-                            </button>
+                            <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+                                <button className="btn btn-primary" onClick={startCamera}>
+                                    <Camera size={18} />
+                                    Start Camera
+                                </button>
+                                <button className="btn btn-outline" onClick={() => setPreferBack(p => !p)}>
+                                    <RotateCcw size={18} />
+                                    {preferBack ? 'Front' : 'Rear'}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </>

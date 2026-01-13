@@ -223,6 +223,7 @@ const NewVisitorPage = () => {
                             <CameraCapture
                                 onCapture={handlePhotoCapture}
                                 onCancel={() => setShowCamera(false)}
+                                useBackCamera={true}
                             />
                         ) : photo ? (
                             <div className="flex gap-4" style={{ alignItems: 'flex-end' }}>
