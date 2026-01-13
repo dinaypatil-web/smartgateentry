@@ -191,6 +191,7 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
     const capturePhoto = useCallback(() => {
         if (!videoRef.current || !canvasRef.current) {
             console.error('Video or canvas not available');
+            setError('Camera not ready. Please wait for video to load.');
             return;
         }
 
@@ -215,6 +216,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
 
         // Enhanced mobile capture with better error handling
         try {
+            console.log('Starting photo capture...');
+            
             // Draw the current video frame to canvas
             context.drawImage(video, 0, 0);
             
@@ -222,6 +225,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             
             console.log('Photo captured successfully, data URL length:', dataUrl.length);
+            
+            // Set photo and handle errors gracefully
             setPhoto(dataUrl);
             
             // Don't stop camera immediately on mobile - let user review first
@@ -233,6 +238,7 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
         } catch (err) {
             console.error('Photo capture error:', err);
             setError('Failed to capture photo. Please try again.');
+            // Don't stop the app - just show error
         }
     }, [stopCamera]);
 
@@ -266,13 +272,9 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                 setError('');
                 // Use helper to start camera honoring preferBack
                 await switchCamera(preferBack);
-
-                if (!mounted && videoRef.current && videoRef.current.srcObject) {
-                    videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-                }
             } catch (err) {
+                console.error('Camera initialization error:', err);
                 if (mounted) {
-                    console.error('Camera error:', err);
                     if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
                         setError('Camera permission denied. Please click the camera icon in your browser address bar and select "Allow".');
                     } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
@@ -281,18 +283,12 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                         setError('Camera is already in use by another application. Please close other apps using the camera and try again.');
                     } else if (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError') {
                         setError('Camera does not support the required settings. Trying with basic settings...');
-                        // Retry with basic constraints
-                        setTimeout(() => {
-                            startCameraWithBasicConstraints();
-                        }, 1000);
-                    } else if (err.name === 'TypeError') {
-                        setError('Camera access is not supported in this browser or in HTTP. Please use HTTPS or try a different browser like Chrome, Firefox, or Edge.');
                     } else {
-                        setError(`Camera access failed: ${err.message || 'Unknown error'}. Please ensure you are using a secure connection (HTTPS) and camera permissions are granted.`);
+                        setError('Camera initialization failed. Please try again.');
                     }
                 }
             }
-        }; 
+        };
 
         initializeCamera();
 
