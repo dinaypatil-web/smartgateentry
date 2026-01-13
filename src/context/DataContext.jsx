@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import * as storage from '../utils/storage';
 import * as storageApi from '../utils/storageApi';
 
@@ -27,6 +27,7 @@ export const DataProvider = ({ children }) => {
     const [sosAlerts, setSosAlerts] = useState([]);
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const pendingSosResolutions = useRef(new Set());
 
     // Load data on mount - use async API if Firebase is configured
     useEffect(() => {
@@ -35,7 +36,18 @@ export const DataProvider = ({ children }) => {
         // Subscribe to SOS alerts for real-time notification
         const unsubscribeSOS = storageApi.subscribeToCollection('sos_alerts', (data) => {
             console.log('DataContext: Real-time SOS update received', data?.length);
-            setSosAlerts(data);
+
+            // Cleanup pending resolutions if the backend confirms they are resolved
+            data.forEach(alert => {
+                if (alert.status === 'resolved' && pendingSosResolutions.current.has(alert.id)) {
+                    pendingSosResolutions.current.delete(alert.id);
+                }
+            });
+
+            // Update state, enforcing 'resolved' status for any pending items to prevent UI flickering
+            setSosAlerts(data.map(alert =>
+                pendingSosResolutions.current.has(alert.id) ? { ...alert, status: 'resolved' } : alert
+            ));
         });
 
         // Subscribe to visitors for real-time entry/exit tracking
@@ -499,13 +511,19 @@ export const DataProvider = ({ children }) => {
     };
 
     const resolveSOS = async (alertId, resolvedBy, residentId = null) => {
+        // Track pending resolutions to prevent race conditions/flickering
+        if (alertId) pendingSosResolutions.current.add(alertId);
+
         // Optimistic update for instant UI response
         const resolvedAt = new Date().toISOString();
-        setSosAlerts(prev => prev.map(alert =>
-            (alert.id === alertId || (residentId && (alert.residentId === residentId || alert.residentid === residentId)))
-                ? { ...alert, status: 'resolved', resolvedBy, resolvedAt }
-                : alert
-        ));
+        setSosAlerts(prev => prev.map(alert => {
+            const isMatch = (alert.id === alertId || (residentId && (alert.residentId === residentId || alert.residentid === residentId)));
+            if (isMatch) {
+                if (alert.id) pendingSosResolutions.current.add(alert.id); // Add batch IDs to pending
+                return { ...alert, status: 'resolved', resolvedBy, resolvedAt };
+            }
+            return alert;
+        }));
 
         const user = users.find(u => u.id === resolvedBy);
         simulateNotification('EMAIL', 'Admin', `SOS Alert ${alertId} has been resolved by ${user?.name || resolvedBy}.`);
