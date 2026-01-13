@@ -83,3 +83,4 @@ Your app is now using Firebase for online storage. All users will share the same
 - **"Permission denied"**: Firestore is in test mode - should work. Check browser console for errors
 - **"Network error"**: Check your internet connection and Firebase project is active
 
+

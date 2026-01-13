@@ -111,3 +111,4 @@ This ensures backward compatibility and allows gradual migration.
 - **Permission errors**: Check Firestore security rules
 - **Connection errors**: Verify Firebase project is active and billing is enabled (if needed)
 
+

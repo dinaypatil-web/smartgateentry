@@ -170,3 +170,4 @@ The app is ready to deploy. Firebase will work in production if environment vari
 
 Environment variables are automatically included in the build.
 
+

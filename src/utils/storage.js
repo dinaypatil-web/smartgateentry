@@ -14,7 +14,8 @@ const STORAGE_KEYS = {
     BOOKINGS: 'sge_bookings',
     STAFF: 'sge_staff',
     PAYMENTS: 'sge_payments',
-    SOS_ALERTS: 'sge_sos_alerts'
+    SOS_ALERTS: 'sge_sos_alerts',
+    DOCUMENTS: 'sge_documents'
 };
 
 // Initialize default data structure
@@ -41,6 +42,7 @@ const initializeStorage = () => {
     if (!localStorage.getItem(STORAGE_KEYS.STAFF)) { setItem(STORAGE_KEYS.STAFF, []); }
     if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) { setItem(STORAGE_KEYS.PAYMENTS, []); }
     if (!localStorage.getItem(STORAGE_KEYS.SOS_ALERTS)) { setItem(STORAGE_KEYS.SOS_ALERTS, []); }
+    if (!localStorage.getItem(STORAGE_KEYS.DOCUMENTS)) { setItem(STORAGE_KEYS.DOCUMENTS, []); }
 };
 
 // Generic storage operations
@@ -601,3 +603,13 @@ export const getAutoBackup = () => {
 };
 
 export { STORAGE_KEYS };
+
+// Additional exports needed by DataContext
+export const getVehicles = () => getItem(STORAGE_KEYS.VEHICLES) || [];
+export const getComplaints = () => getItem(STORAGE_KEYS.COMPLAINTS) || [];
+export const getAmenities = () => getItem(STORAGE_KEYS.AMENITIES) || [];
+export const getBookings = () => getItem(STORAGE_KEYS.BOOKINGS) || [];
+export const getStaff = () => getItem(STORAGE_KEYS.STAFF) || [];
+export const getPayments = () => getItem(STORAGE_KEYS.PAYMENTS) || [];
+export const getSOSAlerts = () => getItem(STORAGE_KEYS.SOS_ALERTS) || [];
+export const getDocuments = () => getItem(STORAGE_KEYS.DOCUMENTS) || [];

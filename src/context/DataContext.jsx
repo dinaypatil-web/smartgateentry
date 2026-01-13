@@ -621,14 +621,12 @@ export const DataProvider = ({ children }) => {
         addNotice,
         deleteNotice,
         getNoticesBySociety,
-        notices,
 
         // Pre-approval operations
         addPreApproval,
         updatePreApproval,
         getPreApprovalsBySociety,
         getPreApprovalsByResident,
-        preApprovals,
 
         // Role-specific queries
         getSuperadmin,
