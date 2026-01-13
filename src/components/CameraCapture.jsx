@@ -189,6 +189,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
     }, [stream, findPreferredDeviceId]);
 
     const capturePhoto = useCallback(() => {
+        console.log('Capture photo button clicked');
+        
         if (!videoRef.current || !canvasRef.current) {
             console.error('Video or canvas not available');
             setError('Camera not ready. Please wait for video to load.');
@@ -197,37 +199,59 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
 
         const video = videoRef.current;
         const canvas = canvasRef.current;
-        const context = canvas.getContext('2d');
+        
+        console.log('Video element state:', {
+            videoWidth: video.videoWidth,
+            videoHeight: video.videoHeight,
+            readyState: video.readyState,
+            srcObject: !!video.srcObject
+        });
 
         // Ensure video dimensions are available
         if (!video.videoWidth || !video.videoHeight) {
-            console.error('Video dimensions not available:', { 
-                videoWidth: video.videoWidth, 
-                videoHeight: video.videoHeight,
-                readyState: video.readyState 
-            });
+            console.error('Video dimensions not available');
             setError('Camera not ready. Please wait for video to load and try again.');
             return;
         }
 
-        // Set canvas dimensions to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        // Enhanced mobile capture with better error handling
         try {
-            console.log('Starting photo capture...');
+            console.log('Setting canvas dimensions...');
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             
+            console.log('Canvas dimensions set:', {
+                width: canvas.width,
+                height: canvas.height
+            });
+
+            const context = canvas.getContext('2d');
+            if (!context) {
+                console.error('Failed to get canvas context');
+                setError('Failed to capture photo. Canvas context not available.');
+                return;
+            }
+
+            console.log('Drawing video to canvas...');
             // Draw the current video frame to canvas
             context.drawImage(video, 0, 0);
             
+            console.log('Converting canvas to data URL...');
             // Capture with higher quality for mobile
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             
             console.log('Photo captured successfully, data URL length:', dataUrl.length);
             
-            // Set photo and handle errors gracefully
-            setPhoto(dataUrl);
+            // Set photo with a small delay to prevent state issues
+            setTimeout(() => {
+                try {
+                    setPhoto(dataUrl);
+                    console.log('Photo state updated successfully');
+                } catch (stateError) {
+                    console.error('Error setting photo state:', stateError);
+                    setError('Failed to save photo. Please try again.');
+                }
+            }, 10);
             
             // Don't stop camera immediately on mobile - let user review first
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -238,7 +262,29 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
         } catch (err) {
             console.error('Photo capture error:', err);
             setError('Failed to capture photo. Please try again.');
-            // Don't stop the app - just show error
+            
+            // Try fallback method for mobile
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                try {
+                    console.log('Trying fallback capture method for mobile...');
+                    // Fallback: Use a simpler canvas approach
+                    const fallbackCanvas = document.createElement('canvas');
+                    fallbackCanvas.width = 640;
+                    fallbackCanvas.height = 480;
+                    const fallbackContext = fallbackCanvas.getContext('2d');
+                    fallbackContext.drawImage(video, 0, 0, 640, 480);
+                    const fallbackDataUrl = fallbackCanvas.toDataURL('image/jpeg', 0.7);
+                    
+                    setTimeout(() => {
+                        setPhoto(fallbackDataUrl);
+                        console.log('Fallback photo captured successfully');
+                    }, 10);
+                } catch (fallbackErr) {
+                    console.error('Fallback capture also failed:', fallbackErr);
+                    setError('Camera capture failed. Please try using a different browser.');
+                }
+            }
         }
     }, [stopCamera]);
 
