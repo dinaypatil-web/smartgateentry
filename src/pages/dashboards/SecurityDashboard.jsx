@@ -679,7 +679,8 @@ const SOSAlertOverlay = () => {
                     padding: 3rem;
                     box-shadow: 0 0 50px rgba(220, 38, 38, 0.8);
                     border: 5px solid var(--error-600);
-                    animation: emergency-shake 0.5s infinite;
+                    border: 5px solid var(--error-600);
+                    /* animation: emergency-shake 0.5s infinite; Removed for usability */
                 }
 
                 @keyframes emergency-shake {
@@ -710,6 +711,7 @@ const SOSAlertOverlay = () => {
                     margin: 0;
                     line-height: 1;
                     letter-spacing: -1px;
+                    color: #dc2626;
                 }
 
                 .emergency-subtitle {
@@ -772,6 +774,8 @@ const SOSAlertOverlay = () => {
                     justify-content: center;
                     gap: 1rem;
                     transition: all 0.2s;
+                    position: relative;
+                    z-index: 10;
                 }
 
                 .sos-resolve-btn:hover {
