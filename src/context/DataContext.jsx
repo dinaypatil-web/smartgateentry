@@ -499,13 +499,27 @@ export const DataProvider = ({ children }) => {
     };
 
     const resolveSOS = async (alertId, resolvedBy) => {
+        // Optimistic update for instant UI response
+        const resolvedAt = new Date().toISOString();
+        setSosAlerts(prev => prev.map(alert =>
+            alert.id === alertId ? { ...alert, status: 'resolved', resolvedBy, resolvedAt } : alert
+        ));
+
         const user = users.find(u => u.id === resolvedBy);
         simulateNotification('EMAIL', 'Admin', `SOS Alert ${alertId} has been resolved by ${user?.name || resolvedBy}.`);
-        return updateDataItem('sos_alerts', alertId, {
-            status: 'resolved',
-            resolvedBy: resolvedBy,
-            resolvedAt: new Date().toISOString()
-        });
+
+        try {
+            return await updateDataItem('sos_alerts', alertId, {
+                status: 'resolved',
+                resolvedBy: resolvedBy,
+                resolvedAt: resolvedAt
+            });
+        } catch (error) {
+            console.error('Failed to resolve SOS in backend:', error);
+            // Revert optimistic update on failure (optional, or rely on refreshData to eventually fix)
+            await refreshData();
+            throw error;
+        }
     };
 
     const value = {
