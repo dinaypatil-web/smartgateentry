@@ -8,6 +8,7 @@ import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import CameraCapture from '../../components/CameraCapture';
+import SimpleCameraCapture from '../../components/SimpleCameraCapture';
 import {
     LayoutDashboard, UserPlus, ClipboardList, LogOut as LogOutIcon,
     Camera, Check, X, User, Phone, MapPin, FileText, Building2,
@@ -98,9 +99,15 @@ const NewVisitorPage = () => {
     const { currentUser, currentRole } = useAuth();
     const { users, addVisitor, getSocietyById } = useData();
     const [showCamera, setShowCamera] = useState(false);
+    const [useSimpleCamera, setUseSimpleCamera] = useState(false); // Toggle between camera modes
     const [photo, setPhoto] = useState(null);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+
+    // Detect if device is mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // Use back camera on mobile, front camera on desktop
+    const useBackCamera = isMobile;
 
     const [formData, setFormData] = useState({
         name: '',
@@ -216,15 +223,49 @@ const NewVisitorPage = () => {
                 {error && <div className="alert alert-error">{error}</div>}
 
                 <form onSubmit={handleSubmit}>
-                    {/* Photo Section */}
+                    {/* Photo Section - Enhanced with multiple capture options */}
                     <div className="form-group">
                         <label className="form-label">Visitor Photo</label>
                         {showCamera ? (
-                            <CameraCapture
-                                onCapture={handlePhotoCapture}
-                                onCancel={() => setShowCamera(false)}
-                                useBackCamera={true}
-                            />
+                            <div className="camera-section">
+                                <div style={{ marginBottom: 'var(--space-3)', textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center', marginBottom: 'var(--space-2)' }}>
+                                        <button
+                                            type="button"
+                                            className={`btn ${!useSimpleCamera ? 'btn-primary' : 'btn-outline'}`}
+                                            onClick={() => setUseSimpleCamera(false)}
+                                            style={{ fontSize: '0.85rem', padding: 'var(--space-2) var(--space-3)' }}
+                                        >
+                                            Advanced Camera
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`btn ${useSimpleCamera ? 'btn-primary' : 'btn-outline'}`}
+                                            onClick={() => setUseSimpleCamera(true)}
+                                            style={{ fontSize: '0.85rem', padding: 'var(--space-2) var(--space-3)' }}
+                                        >
+                                            Simple Camera
+                                        </button>
+                                    </div>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                        {useSimpleCamera ? 'More reliable, fewer features' : 'Full features, may have compatibility issues'}
+                                    </p>
+                                </div>
+
+                                {useSimpleCamera ? (
+                                    <SimpleCameraCapture
+                                        onCapture={handlePhotoCapture}
+                                        onCancel={() => setShowCamera(false)}
+                                        useBackCamera={useBackCamera}
+                                    />
+                                ) : (
+                                    <CameraCapture
+                                        onCapture={handlePhotoCapture}
+                                        onCancel={() => setShowCamera(false)}
+                                        useBackCamera={useBackCamera}
+                                    />
+                                )}
+                            </div>
                         ) : photo ? (
                             <div className="flex gap-4" style={{ alignItems: 'flex-end' }}>
                                 <img
@@ -238,24 +279,99 @@ const NewVisitorPage = () => {
                                         border: '2px solid var(--border-color)'
                                     }}
                                 />
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={() => { setPhoto(null); setShowCamera(true); }}
-                                >
-                                    <Camera size={18} />
-                                    Retake Photo
-                                </button>
+                                <div className="flex gap-2" style={{ flexDirection: 'column' }}>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => { setPhoto(null); setShowCamera(true); }}
+                                    >
+                                        <Camera size={18} />
+                                        Retake Photo
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline"
+                                        onClick={() => document.getElementById('photo-upload').click()}
+                                    >
+                                        <FileText size={18} />
+                                        Change Photo
+                                    </button>
+                                </div>
                             </div>
                         ) : (
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={() => setShowCamera(true)}
-                            >
-                                <Camera size={18} />
-                                Capture Photo
-                            </button>
+                            <div className="photo-options-grid" style={{
+                                display: 'grid',
+                                gap: 'var(--space-3)',
+                                marginBottom: 'var(--space-3)'
+                            }}>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => setShowCamera(true)}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)' }}
+                                >
+                                    <Camera size={18} />
+                                    Live Camera Capture
+                                    <span style={{ fontSize: '0.8em', opacity: 0.8 }}>({useBackCamera ? 'Back Camera' : 'Front Camera'})</span>
+                                </button>
+
+                                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline"
+                                        onClick={() => document.getElementById('photo-upload').click()}
+                                        style={{ flex: 1, minWidth: '150px' }}
+                                    >
+                                        <FileText size={18} />
+                                        Upload Photo
+                                    </button>
+
+                                    {isMobile && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline"
+                                            onClick={() => {
+                                                const input = document.createElement('input');
+                                                input.type = 'file';
+                                                input.accept = 'image/*';
+                                                input.capture = 'environment'; // Back camera on mobile
+                                                input.onchange = (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onload = (event) => {
+                                                            setPhoto(event.target.result);
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                };
+                                                input.click();
+                                            }}
+                                            style={{ flex: 1, minWidth: '150px' }}
+                                        >
+                                            <Camera size={18} />
+                                            Mobile Camera
+                                        </button>
+                                    )}
+                                </div>
+
+                                <input
+                                    id="photo-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onload = (event) => {
+                                                setPhoto(event.target.result);
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                />
+                            </div>
                         )}
                     </div>
 
