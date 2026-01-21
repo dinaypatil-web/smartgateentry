@@ -112,3 +112,4 @@ This ensures backward compatibility and allows gradual migration.
 - **Connection errors**: Verify Firebase project is active and billing is enabled (if needed)
 
 
+

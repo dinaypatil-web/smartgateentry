@@ -371,9 +371,6 @@ export const addVisitor = async (visitorData) => {
             throw new Error('residentId is required for visitor creation');
         }
 
-        // Check table structure first
-        const availableColumns = await checkTableStructure(COLLECTIONS.VISITORS);
-
         const visitorWithId = {
             ...visitorData,
             status: 'pending',
@@ -381,29 +378,13 @@ export const addVisitor = async (visitorData) => {
             exitTime: null
         };
 
-        // Create data object with only available columns
-        let dbData = {};
-        if (availableColumns) {
-            // Only include fields that exist in the database
-            Object.keys(visitorWithId).forEach(key => {
-                const lowerKey = key.toLowerCase();
-                const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        // Use all data by default (trusting the schema is up to date)
+        // This ensures 'photo' and other new fields are not filtered out by checkTableStructure
+        let dbData = toDb(visitorWithId);
 
-                if (availableColumns.includes(key) ||
-                    availableColumns.includes(lowerKey) ||
-                    availableColumns.includes(snakeKey)) {
-                    dbData[lowerKey] = visitorWithId[key];
-                }
-            });
-            console.log('Supabase: Filtered data based on available columns:', dbData);
-        } else {
-            // Fallback: Use original mapping without problematic fields
-            const { createdBy, ...dataWithoutCreatedBy } = visitorWithId;
-            dbData = toDb(dataWithoutCreatedBy);
-            console.log('Supabase: Using fallback mapping (without createdBy):', dbData);
-        }
+        console.log('Supabase: Attempting to insert visitor data:', dbData);
 
-        // Critical verification: Ensure residentid is included
+        // Critical verification: Ensure residentid is included if it was lost in mapping
         if (!dbData.residentid && visitorWithId.residentId) {
             dbData.residentid = visitorWithId.residentId;
             console.log('Supabase: Force-added residentid:', visitorWithId.residentId);
@@ -415,9 +396,10 @@ export const addVisitor = async (visitorData) => {
             .select()
             .single();
 
-        // If first attempt fails, try with minimal required fields only
+        // If first attempt fails with column error, try with minimal required fields only as fallback
         if (error && (error.message.includes('column') || error.message.includes('does not exist'))) {
-            console.log('Supabase: First attempt failed, trying minimal data...');
+            console.log('Supabase: First attempt failed (likely schema mismatch), trying minimal data...');
+            console.warn('Supabase: Schema error details:', error.message);
 
             const minimalData = {
                 id: visitorWithId.id,
@@ -443,19 +425,7 @@ export const addVisitor = async (visitorData) => {
 
         if (error) {
             console.error('Supabase: Database error:', error);
-
-            // Handle specific column errors
-            if (error.message.includes('column') && error.message.includes('does not exist')) {
-                throw new Error(`Database schema error: ${error.message}. Available columns: ${availableColumns ? availableColumns.join(', ') : 'unknown'}`);
-            } else if (error.message.includes('createdby')) {
-                throw new Error(`Database schema error: "createdby" column not found. Available columns: ${availableColumns ? availableColumns.join(', ') : 'unknown'}`);
-            } else if (error.message.includes('residentid')) {
-                throw new Error(`Database schema error: "residentid" column issue. Available columns: ${availableColumns ? availableColumns.join(', ') : 'unknown'}`);
-            } else if (error.message.includes('violates')) {
-                throw new Error(`Database constraint error: ${error.message}`);
-            } else {
-                throw new Error(`Database error: ${error.message}`);
-            }
+            throw new Error(`Database error: ${error.message}`);
         }
 
         console.log('Supabase: Visitor added successfully:', data);

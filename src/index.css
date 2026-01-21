@@ -1311,6 +1311,57 @@ a:hover {
 }
 
 /* ===== Empty State ===== */
+
+/* ===== Camera Capture ===== */
+.camera-container {
+    width: 100%;
+    max-width: 100%;
+}
+.camera-video {
+    display: block;
+}
+.camera-preview {
+    max-width: 100%;
+    height: auto;
+    max-height: 60vh;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+.camera-controls {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: var(--space-4);
+}
+.camera-error-container .alert {
+    width: 100%;
+}
+
+/* ===== Photo Options ===== */
+.photo-options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.photo-options-grid .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+@media (min-width: 768px) {
+    .photo-options-grid {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .photo-options-grid .btn {
+        flex: 1;
+        min-width: 200px;
+    }
+}
 .empty-state {
     text-align: center;
     padding: var(--space-16) var(--space-8);
@@ -1457,6 +1508,14 @@ a:hover {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+}
+
+.camera-section {
+    width: 100%;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .camera-video {
