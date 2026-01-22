@@ -26,43 +26,79 @@ export const generateId = () => {
 const toDb = (data) => {
     if (!data) return data;
     const mapped = {};
+    
+    // Define explicit field mappings to ensure consistency
+    const fieldMappings = {
+        'createdBy': 'createdby',
+        'societyId': 'societyid', 
+        'residentId': 'residentid',
+        'contactNumber': 'contactnumber',
+        'idProof': 'idproof',
+        'comingFrom': 'comingfrom',
+        'entryTime': 'entrytime',
+        'exitTime': 'exittime',
+        'plateNumber': 'platenumber',
+        'assignedTo': 'assignedto',
+        'amenityId': 'amenityid',
+        'isGateAllowed': 'isgateallowed',
+        'permissionFromDate': 'permissionfromdate',
+        'permissionToDate': 'permissiontodate',
+        'createdAt': 'createdat',
+        'visitorName': 'visitorname',
+        'expectedDate': 'expecteddate',
+        'passCode': 'passcode',
+        'isResigned': 'isresigned',
+        'loginName': 'loginname',
+        'loginPassword': 'loginpassword',
+        'flatNumber': 'flatnumber',
+        'securityQuestion': 'securityquestion',
+        'securityAnswer': 'securityanswer'
+    };
+    
     Object.keys(data).forEach(key => {
-        // Handle specific field mappings to avoid schema issues
-        if (key === 'createdBy') {
-            mapped['createdby'] = data[key]; // Use lowercase version
-        } else if (key === 'societyId') {
-            mapped['societyid'] = data[key];
-        } else if (key === 'residentId') {
-            mapped['residentid'] = data[key]; // Critical field for resident association
-        } else if (key === 'contactNumber') {
-            mapped['contactnumber'] = data[key];
-        } else if (key === 'idProof') {
-            mapped['idproof'] = data[key];
-        } else if (key === 'comingFrom') {
-            mapped['comingfrom'] = data[key];
-        } else if (key === 'entryTime') {
-            mapped['entrytime'] = data[key];
-        } else if (key === 'exitTime') {
-            mapped['exittime'] = data[key];
-        } else if (key === 'plateNumber') {
-            mapped['platenumber'] = data[key];
-        } else if (key === 'assignedTo') {
-            mapped['assignedto'] = data[key];
-        } else if (key === 'amenityId') {
-            mapped['amenityid'] = data[key];
-        } else if (key === 'isGateAllowed') {
-            mapped['isgateallowed'] = data[key];
-        } else if (key === 'permissionFromDate') {
-            mapped['permissionfromdate'] = data[key];
-        } else if (key === 'permissionToDate') {
-            mapped['permissiontodate'] = data[key];
+        // Use explicit mapping if available
+        if (fieldMappings[key]) {
+            mapped[fieldMappings[key]] = data[key];
         } else {
             // Default: convert to lowercase
             mapped[key.toLowerCase()] = data[key];
         }
     });
+    
+    // Critical validation: Ensure essential visitor fields are not lost
+    if (data.residentId && !mapped.residentid) {
+        mapped.residentid = data.residentId;
+        console.warn('Supabase API: Force-mapped residentId to residentid');
+    }
+    if (data.societyId && !mapped.societyid) {
+        mapped.societyid = data.societyId;
+        console.warn('Supabase API: Force-mapped societyId to societyid');
+    }
+    if (data.contactNumber && !mapped.contactnumber) {
+        mapped.contactnumber = data.contactNumber;
+        console.warn('Supabase API: Force-mapped contactNumber to contactnumber');
+    }
+    if (data.idProof && !mapped.idproof) {
+        mapped.idproof = data.idProof;
+        console.warn('Supabase API: Force-mapped idProof to idproof');
+    }
+    if (data.comingFrom && !mapped.comingfrom) {
+        mapped.comingfrom = data.comingFrom;
+        console.warn('Supabase API: Force-mapped comingFrom to comingfrom');
+    }
+    
     console.log('Supabase API: Field mapping result:', {
-        ...mapped,
+        originalKeys: Object.keys(data),
+        mappedKeys: Object.keys(mapped),
+        criticalFields: {
+            residentid: mapped.residentid,
+            societyid: mapped.societyid,
+            contactnumber: mapped.contactnumber,
+            idproof: mapped.idproof,
+            comingfrom: mapped.comingfrom,
+            gender: mapped.gender,
+            purpose: mapped.purpose
+        },
         photo: mapped.photo ? `Photo data (${mapped.photo.length} chars)` : 'No photo'
     });
     return mapped;
@@ -367,35 +403,56 @@ export const checkTableStructure = async (tableName) => {
 
 export const addVisitor = async (visitorData) => {
     try {
-        console.log('Supabase: Adding visitor:', {
+        console.log('Supabase: Adding visitor with enhanced validation:', {
             ...visitorData,
             photo: visitorData.photo ? `Image data (${visitorData.photo.length} chars)` : 'No photo'
         });
 
-        // Critical: Ensure residentId is preserved
-        if (!visitorData.residentId) {
-            throw new Error('residentId is required for visitor creation');
+        // Enhanced validation for critical fields
+        const requiredFields = ['name', 'residentId', 'societyId'];
+        const missingFields = requiredFields.filter(field => !visitorData[field]);
+        
+        if (missingFields.length > 0) {
+            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
         }
+
+        // Validate and sanitize data
+        const sanitizedData = {
+            ...visitorData,
+            name: visitorData.name?.trim(),
+            gender: visitorData.gender || 'male',
+            idProof: visitorData.idProof?.trim() || '',
+            comingFrom: visitorData.comingFrom?.trim() || '',
+            purpose: visitorData.purpose?.trim() || '',
+            contactNumber: visitorData.contactNumber?.trim() || '',
+            residentId: visitorData.residentId, // Critical - ensure this is preserved
+            societyId: visitorData.societyId   // Critical - ensure this is preserved
+        };
+
+        console.log('Supabase: Sanitized visitor data:', {
+            ...sanitizedData,
+            photo: sanitizedData.photo ? `Image data (${sanitizedData.photo.length} chars)` : 'No photo'
+        });
 
         // Validate and optimize image data
         let optimizedPhoto = null;
-        if (visitorData.photo) {
+        if (sanitizedData.photo) {
             try {
                 // Validate image format
-                if (!visitorData.photo.startsWith('data:image/')) {
+                if (!sanitizedData.photo.startsWith('data:image/')) {
                     throw new Error('Invalid image format - must be data URL');
                 }
 
                 // Check image size (limit to 1MB base64)
-                if (visitorData.photo.length > 1048576) {
+                if (sanitizedData.photo.length > 1048576) {
                     console.warn('Image size too large, compressing...');
-                    optimizedPhoto = await compressImage(visitorData.photo, 0.7);
+                    optimizedPhoto = await compressImage(sanitizedData.photo, 0.7);
                 } else {
-                    optimizedPhoto = visitorData.photo;
+                    optimizedPhoto = sanitizedData.photo;
                 }
 
                 console.log('Image validation passed:', {
-                    originalSize: visitorData.photo.length,
+                    originalSize: sanitizedData.photo.length,
                     optimizedSize: optimizedPhoto.length,
                     format: optimizedPhoto.substring(0, 30)
                 });
@@ -407,14 +464,14 @@ export const addVisitor = async (visitorData) => {
         }
 
         const visitorWithId = {
-            ...visitorData,
+            ...sanitizedData,
             photo: optimizedPhoto,
             status: 'pending',
             entryTime: new Date().toISOString(),
             exitTime: null
         };
 
-        // Use all data by default (trusting the schema is up to date)
+        // Use enhanced field mapping
         let dbData = toDb(visitorWithId);
 
         console.log('Supabase: Attempting to insert visitor data:', {
@@ -422,10 +479,22 @@ export const addVisitor = async (visitorData) => {
             photo: dbData.photo ? `Image data (${dbData.photo.length} chars)` : 'No photo'
         });
 
-        // Critical verification: Ensure residentid is included if it was lost in mapping
-        if (!dbData.residentid && visitorWithId.residentId) {
-            dbData.residentid = visitorWithId.residentId;
-            console.log('Supabase: Force-added residentid:', visitorWithId.residentId);
+        // Final validation: Ensure critical fields are mapped correctly
+        const criticalFieldCheck = {
+            residentid: dbData.residentid,
+            societyid: dbData.societyid,
+            name: dbData.name,
+            status: dbData.status,
+            entrytime: dbData.entrytime
+        };
+
+        const missingCriticalDb = Object.entries(criticalFieldCheck)
+            .filter(([key, value]) => !value)
+            .map(([key]) => key);
+
+        if (missingCriticalDb.length > 0) {
+            console.error('Supabase: Critical fields missing after mapping:', missingCriticalDb);
+            throw new Error(`Database mapping failed for fields: ${missingCriticalDb.join(', ')}`);
         }
 
         let { data, error } = await supabase
@@ -442,6 +511,11 @@ export const addVisitor = async (visitorData) => {
             const minimalData = {
                 id: visitorWithId.id,
                 name: visitorWithId.name,
+                gender: visitorWithId.gender || 'male',
+                contactnumber: visitorWithId.contactNumber || '',
+                idproof: visitorWithId.idProof || '',
+                comingfrom: visitorWithId.comingFrom || '',
+                purpose: visitorWithId.purpose || '',
                 status: visitorWithId.status,
                 entrytime: visitorWithId.entryTime,
                 societyid: visitorWithId.societyId,
@@ -473,6 +547,10 @@ export const addVisitor = async (visitorData) => {
                 throw new Error('Image too large for database storage. Please use a smaller image.');
             } else if (error.message.includes('photo')) {
                 throw new Error('Image storage failed. Please try again or contact support.');
+            } else if (error.message.includes('residentid')) {
+                throw new Error('Invalid resident selection. Please select a valid resident.');
+            } else if (error.message.includes('societyid')) {
+                throw new Error('Invalid society context. Please refresh and try again.');
             } else {
                 throw new Error(`Database error: ${error.message}`);
             }
