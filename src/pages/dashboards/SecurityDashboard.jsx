@@ -136,8 +136,23 @@ const NewVisitorPage = () => {
     };
 
     const handlePhotoCapture = (photoData) => {
+        console.log('Photo captured, size:', photoData ? photoData.length : 0);
+        
+        // Validate the captured photo
+        if (!photoData || !photoData.startsWith('data:image/')) {
+            setError('Invalid photo data captured. Please try again.');
+            return;
+        }
+        
+        // Check photo size (warn if > 500KB)
+        if (photoData.length > 512000) {
+            console.warn('Large photo captured:', photoData.length, 'characters');
+            // Could implement compression here if needed
+        }
+        
         setPhoto(photoData);
         setShowCamera(false);
+        setError(''); // Clear any previous errors
     };
 
     const handleSubmit = async (e) => {
@@ -153,7 +168,7 @@ const NewVisitorPage = () => {
         try {
             console.log('Submitting visitor data:', {
                 ...formData,
-                photo: photo ? 'Photo captured' : 'No photo',
+                photo: photo ? `Photo captured (${photo.length} chars)` : 'No photo',
                 societyId: currentRole?.societyId,
                 createdBy: currentUser.id,
                 residentId: formData.residentId
@@ -165,6 +180,12 @@ const NewVisitorPage = () => {
                 return;
             }
 
+            // Validate photo if present
+            if (photo && !photo.startsWith('data:image/')) {
+                setError('Invalid photo format. Please capture the photo again.');
+                return;
+            }
+
             const visitorData = {
                 ...formData,
                 photo: photo,
@@ -173,7 +194,10 @@ const NewVisitorPage = () => {
                 residentId: formData.residentId // Ensure this is explicitly included
             };
 
-            console.log('Final visitor data to be saved:', visitorData);
+            console.log('Final visitor data to be saved:', {
+                ...visitorData,
+                photo: visitorData.photo ? `Photo data (${visitorData.photo.length} chars)` : 'No photo'
+            });
 
             const result = await addVisitor(visitorData);
             console.log('Visitor added successfully:', result);
@@ -197,7 +221,13 @@ const NewVisitorPage = () => {
 
             // Provide more specific error messages
             if (error.message) {
-                if (error.message.includes('storage')) {
+                if (error.message.includes('Image too large')) {
+                    setError('Photo is too large. Please capture a smaller image or try the simple camera mode.');
+                } else if (error.message.includes('Image storage failed')) {
+                    setError('Failed to save photo. Please try capturing the image again.');
+                } else if (error.message.includes('Invalid image format')) {
+                    setError('Invalid photo format. Please capture the photo again using the camera.');
+                } else if (error.message.includes('storage')) {
                     setError('Storage error: Unable to save visitor data. Please check your browser storage settings.');
                 } else if (error.message.includes('network') || error.message.includes('fetch')) {
                     setError('Network error: Unable to connect to the server. Please check your internet connection.');

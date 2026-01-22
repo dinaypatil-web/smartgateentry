@@ -61,7 +61,10 @@ const toDb = (data) => {
             mapped[key.toLowerCase()] = data[key];
         }
     });
-    console.log('Supabase API: Field mapping result:', mapped);
+    console.log('Supabase API: Field mapping result:', {
+        ...mapped,
+        photo: mapped.photo ? `Photo data (${mapped.photo.length} chars)` : 'No photo'
+    });
     return mapped;
 };
 
@@ -364,25 +367,60 @@ export const checkTableStructure = async (tableName) => {
 
 export const addVisitor = async (visitorData) => {
     try {
-        console.log('Supabase: Adding visitor:', visitorData);
+        console.log('Supabase: Adding visitor:', {
+            ...visitorData,
+            photo: visitorData.photo ? `Image data (${visitorData.photo.length} chars)` : 'No photo'
+        });
 
         // Critical: Ensure residentId is preserved
         if (!visitorData.residentId) {
             throw new Error('residentId is required for visitor creation');
         }
 
+        // Validate and optimize image data
+        let optimizedPhoto = null;
+        if (visitorData.photo) {
+            try {
+                // Validate image format
+                if (!visitorData.photo.startsWith('data:image/')) {
+                    throw new Error('Invalid image format - must be data URL');
+                }
+
+                // Check image size (limit to 1MB base64)
+                if (visitorData.photo.length > 1048576) {
+                    console.warn('Image size too large, compressing...');
+                    optimizedPhoto = await compressImage(visitorData.photo, 0.7);
+                } else {
+                    optimizedPhoto = visitorData.photo;
+                }
+
+                console.log('Image validation passed:', {
+                    originalSize: visitorData.photo.length,
+                    optimizedSize: optimizedPhoto.length,
+                    format: optimizedPhoto.substring(0, 30)
+                });
+            } catch (imageError) {
+                console.error('Image processing error:', imageError);
+                // Continue without photo rather than failing completely
+                optimizedPhoto = null;
+            }
+        }
+
         const visitorWithId = {
             ...visitorData,
+            photo: optimizedPhoto,
             status: 'pending',
             entryTime: new Date().toISOString(),
             exitTime: null
         };
 
         // Use all data by default (trusting the schema is up to date)
-        // This ensures 'photo' and other new fields are not filtered out by checkTableStructure
         let dbData = toDb(visitorWithId);
 
-        console.log('Supabase: Attempting to insert visitor data:', dbData);
+        console.log('Supabase: Attempting to insert visitor data:', {
+            ...dbData,
+            photo: dbData.photo ? `Image data (${dbData.photo.length} chars)` : 'No photo'
+        });
 
         // Critical verification: Ensure residentid is included if it was lost in mapping
         if (!dbData.residentid && visitorWithId.residentId) {
@@ -407,11 +445,15 @@ export const addVisitor = async (visitorData) => {
                 status: visitorWithId.status,
                 entrytime: visitorWithId.entryTime,
                 societyid: visitorWithId.societyId,
-                residentid: visitorWithId.residentId // Critical field
+                residentid: visitorWithId.residentId, // Critical field
+                photo: optimizedPhoto // Include photo in minimal data too
             };
 
             dbData = minimalData;
-            console.log('Supabase: Minimal data attempt:', dbData);
+            console.log('Supabase: Minimal data attempt:', {
+                ...dbData,
+                photo: dbData.photo ? `Image data (${dbData.photo.length} chars)` : 'No photo'
+            });
 
             const result = await supabase
                 .from(COLLECTIONS.VISITORS)
@@ -425,15 +467,56 @@ export const addVisitor = async (visitorData) => {
 
         if (error) {
             console.error('Supabase: Database error:', error);
-            throw new Error(`Database error: ${error.message}`);
+            
+            // Provide specific error messages for common issues
+            if (error.message.includes('payload too large') || error.message.includes('row size')) {
+                throw new Error('Image too large for database storage. Please use a smaller image.');
+            } else if (error.message.includes('photo')) {
+                throw new Error('Image storage failed. Please try again or contact support.');
+            } else {
+                throw new Error(`Database error: ${error.message}`);
+            }
         }
 
-        console.log('Supabase: Visitor added successfully:', data);
+        console.log('Supabase: Visitor added successfully:', {
+            ...data,
+            photo: data.photo ? `Image stored (${data.photo.length} chars)` : 'No photo'
+        });
         return fromDb(data);
     } catch (error) {
         console.error('Error adding visitor:', error);
         throw error;
     }
+};
+
+// Helper function to compress images
+const compressImage = async (dataUrl, quality = 0.7) => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new dimensions (max 800x600)
+            let { width, height } = img;
+            const maxWidth = 800;
+            const maxHeight = 600;
+            
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedDataUrl);
+        };
+        img.src = dataUrl;
+    });
 };
 
 export const updateVisitor = async (id, updates) => {
