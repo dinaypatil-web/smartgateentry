@@ -371,7 +371,11 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
         <div className="camera-container" style={{
             width: '100%',
             maxWidth: '100%',
-            margin: '0 auto'
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            maxHeight: '100vh'
         }}>
             {error ? (
                 <div className="camera-error-container" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
@@ -425,7 +429,7 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                 </div>
             ) : photo ? (
                 <>
-                    <div style={{ textAlign: 'center', marginBottom: 'var(--space-3)' }}>
+                    <div style={{ textAlign: 'center', marginBottom: 'var(--space-3)', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img 
                             src={photo} 
                             alt="Captured" 
@@ -433,6 +437,7 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                             style={{ 
                                 transform: preferBack ? 'none' : 'scaleX(-1)',
                                 maxWidth: '100%',
+                                maxHeight: '100%',
                                 height: 'auto',
                                 borderRadius: 'var(--radius-md)',
                                 boxShadow: 'var(--shadow-lg)'
@@ -443,7 +448,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                         display: 'flex',
                         gap: 'var(--space-3)',
                         justifyContent: 'center',
-                        flexWrap: 'wrap'
+                        flexWrap: 'wrap',
+                        padding: 'var(--space-3) 0'
                     }}>
                         <button className="btn btn-secondary" onClick={retakePhoto}>
                             <RotateCcw size={18} />
@@ -465,9 +471,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: '400px',
-                    padding: 'var(--space-6)',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    flex: 1
                 }}>
                     <div className="spinner" style={{
                         width: '48px',
@@ -498,49 +503,50 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                             color: 'var(--color-muted)',
                             background: 'var(--bg-glass)',
                             padding: 'var(--space-2)',
-                            borderRadius: 'var(--radius-md)'
+                            borderRadius: 'var(--radius-md)',
+                            flexShrink: 0
                         }}>
                             📷 {currentCameraInfo}
                         </div>
                     )}
-                    <video
-                        ref={videoRef}
-                        className="camera-video"
-                        autoPlay
-                        playsInline
-                        muted
-                        style={{
-                            width: '100%',
-                            height: 'auto',
-                            minHeight: '200px',
-                            maxHeight: '70vh',
-                            objectFit: 'cover',
-                            transform: preferBack ? 'none' : 'scaleX(-1)',
-                            borderRadius: 'var(--radius-md)',
-                            backgroundColor: 'var(--gray-900)',
-                            boxShadow: 'var(--shadow-lg)'
-                        }}
-                        onLoadedMetadata={() => {
-                            console.log('Video metadata loaded:', {
-                                videoWidth: videoRef.current?.videoWidth,
-                                videoHeight: videoRef.current?.videoHeight,
-                                readyState: videoRef.current?.readyState
-                            });
-                            // Ensure video plays properly
-                            if (videoRef.current) {
-                                videoRef.current.play().catch(err => {
-                                    console.error('Video play error:', err);
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <video
+                            ref={videoRef}
+                            className="camera-video"
+                            autoPlay
+                            playsInline
+                            muted
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                transform: preferBack ? 'none' : 'scaleX(-1)',
+                                borderRadius: 'var(--radius-md)',
+                                backgroundColor: 'var(--gray-900)',
+                                boxShadow: 'var(--shadow-lg)'
+                            }}
+                            onLoadedMetadata={() => {
+                                console.log('Video metadata loaded:', {
+                                    videoWidth: videoRef.current?.videoWidth,
+                                    videoHeight: videoRef.current?.videoHeight,
+                                    readyState: videoRef.current?.readyState
                                 });
-                            }
-                        }}
-                        onCanPlay={() => {
-                            console.log('Video can play - camera ready for capture');
-                        }}
-                        onError={(e) => {
-                            console.error('Video error:', e);
-                            setError('Video error occurred. Please try again.');
-                        }}
-                    />
+                                // Ensure video plays properly
+                                if (videoRef.current) {
+                                    videoRef.current.play().catch(err => {
+                                        console.error('Video play error:', err);
+                                    });
+                                }
+                            }}
+                            onCanPlay={() => {
+                                console.log('Video can play - camera ready for capture');
+                            }}
+                            onError={(e) => {
+                                console.error('Video error:', e);
+                                setError('Video error occurred. Please try again.');
+                            }}
+                        />
+                    </div>
                     <canvas ref={canvasRef} style={{ display: 'none' }} />
                     <div className="camera-controls" style={{
                         display: 'flex',
@@ -548,7 +554,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                         justifyContent: 'center',
                         alignItems: 'center',
                         flexWrap: 'wrap',
-                        marginTop: 'var(--space-3)'
+                        padding: 'var(--space-3) 0',
+                        flexShrink: 0
                     }}>
                         {isStreaming ? (
                             <>

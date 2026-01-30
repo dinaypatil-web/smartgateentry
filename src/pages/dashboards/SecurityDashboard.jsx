@@ -271,8 +271,15 @@ const NewVisitorPage = () => {
                         <label className="form-label">Visitor Photo</label>
                         {showCamera ? (
                             <div className="camera-section">
-                                <div style={{ marginBottom: 'var(--space-3)', textAlign: 'center' }}>
-                                    {/* Camera Mode Toggle */}
+                                {/* Camera Mode Toggle - Moved Above */}
+                                <div style={{ 
+                                    marginBottom: 'var(--space-4)', 
+                                    textAlign: 'center',
+                                    padding: 'var(--space-3)',
+                                    background: 'var(--bg-glass)',
+                                    borderRadius: 'var(--radius-lg)',
+                                    border: '1px solid var(--border-color)'
+                                }}>
                                     <div style={{ 
                                         display: 'flex', 
                                         alignItems: 'center', 
