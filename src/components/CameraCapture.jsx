@@ -368,7 +368,11 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
     }, [switchCamera, preferBack, startCameraWithBasicConstraints]); // Dependencies are now stable
 
     return (
-        <div className="camera-container">
+        <div className="camera-container" style={{
+            width: '100%',
+            maxWidth: '100%',
+            margin: '0 auto'
+        }}>
             {error ? (
                 <div className="camera-error-container" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
                     <div className="alert alert-error" style={{ marginBottom: 'var(--space-4)' }}>
@@ -422,18 +426,34 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
             ) : photo ? (
                 <>
                     <div style={{ textAlign: 'center', marginBottom: 'var(--space-3)' }}>
-                        <img src={photo} alt="Captured" className="camera-preview" style={{ transform: preferBack ? 'none' : 'scaleX(-1)' }} />
+                        <img 
+                            src={photo} 
+                            alt="Captured" 
+                            className="camera-preview" 
+                            style={{ 
+                                transform: preferBack ? 'none' : 'scaleX(-1)',
+                                maxWidth: '100%',
+                                height: 'auto',
+                                borderRadius: 'var(--radius-md)',
+                                boxShadow: 'var(--shadow-lg)'
+                            }} 
+                        />
                     </div>
-                    <div className="camera-controls">
-                        <button type="button" className="btn btn-secondary" onClick={retakePhoto}>
+                    <div className="camera-controls" style={{
+                        display: 'flex',
+                        gap: 'var(--space-3)',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap'
+                    }}>
+                        <button className="btn btn-secondary" onClick={retakePhoto}>
                             <RotateCcw size={18} />
                             Retake
                         </button>
-                        <button type="button" className="btn btn-success" onClick={confirmPhoto}>
+                        <button className="btn btn-success" onClick={confirmPhoto}>
                             <Check size={18} />
                             Use Photo
                         </button>
-                        <button type="button" className="btn btn-ghost" onClick={handleCancel}>
+                        <button className="btn btn-ghost" onClick={handleCancel}>
                             <X size={18} />
                             Cancel
                         </button>
@@ -473,8 +493,8 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                     {currentCameraInfo && (
                         <div style={{
                             textAlign: 'center',
-                            marginBottom: 'var(--space-3)',
-                            fontSize: '0.875rem',
+                            marginBottom: 'var(--space-2)',
+                            fontSize: '0.8rem',
                             color: 'var(--color-muted)',
                             background: 'var(--bg-glass)',
                             padding: 'var(--space-2)',
@@ -492,10 +512,13 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                         style={{
                             width: '100%',
                             height: 'auto',
-                            minHeight: '300px',
-                            maxHeight: '60vh',
+                            minHeight: '200px',
+                            maxHeight: '70vh',
                             objectFit: 'cover',
-                            transform: preferBack ? 'none' : 'scaleX(-1)'
+                            transform: preferBack ? 'none' : 'scaleX(-1)',
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: 'var(--gray-900)',
+                            boxShadow: 'var(--shadow-lg)'
                         }}
                         onLoadedMetadata={() => {
                             console.log('Video metadata loaded:', {
@@ -519,7 +542,14 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                         }}
                     />
                     <canvas ref={canvasRef} style={{ display: 'none' }} />
-                    <div className="camera-controls">
+                    <div className="camera-controls" style={{
+                        display: 'flex',
+                        gap: 'var(--space-2)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        marginTop: 'var(--space-3)'
+                    }}>
                         {isStreaming ? (
                             <>
                                 {availableCameras.length > 1 && (
@@ -528,34 +558,55 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                                         className="btn btn-outline"
                                         onClick={() => { const next = !preferBack; setPreferBack(next); switchCamera(next); }}
                                         title={availableCameras.length > 1 ? `Switch to ${preferBack ? 'Front' : 'Rear'} Camera` : 'Switch Camera'}
+                                        style={{ fontSize: '0.875rem', padding: 'var(--space-2) var(--space-3)' }}
                                     >
-                                        <RotateCcw size={18} />
+                                        <RotateCcw size={16} />
                                         {preferBack ? 'Front' : 'Rear'}
                                     </button>
                                 )}
-                                <button type="button" className="btn btn-primary" onClick={capturePhoto}>
-                                    <Camera size={18} />
+                                <button 
+                                    type="button" 
+                                    className="btn btn-primary" 
+                                    onClick={capturePhoto}
+                                    style={{ 
+                                        fontSize: '1rem',
+                                        padding: 'var(--space-3) var(--space-4)',
+                                        minWidth: '120px'
+                                    }}
+                                >
+                                    <Camera size={20} />
                                     Capture
                                 </button>
-                                <button type="button" className="btn btn-ghost" onClick={handleCancel}>
-                                    <X size={18} />
+                                <button 
+                                    type="button" 
+                                    className="btn btn-ghost" 
+                                    onClick={handleCancel}
+                                    style={{ fontSize: '0.875rem', padding: 'var(--space-2) var(--space-3)' }}
+                                >
+                                    <X size={16} />
                                     Cancel
                                 </button>
                             </>
                         ) : (
-                            <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
-                                <button type="button" className="btn btn-primary" onClick={startCamera}>
-                                    <Camera size={18} />
+                            <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-primary" 
+                                    onClick={startCamera}
+                                    style={{ fontSize: '1rem', padding: 'var(--space-3) var(--space-4)' }}
+                                >
+                                    <Camera size={20} />
                                     Start Camera
                                 </button>
                                 {availableCameras.length > 1 && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline"
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-outline" 
                                         onClick={() => setPreferBack(p => !p)}
                                         title="Switch Camera"
+                                        style={{ fontSize: '0.875rem', padding: 'var(--space-2) var(--space-3)' }}
                                     >
-                                        <RotateCcw size={18} />
+                                        <RotateCcw size={16} />
                                         {preferBack ? 'Front' : 'Rear'}
                                     </button>
                                 )}

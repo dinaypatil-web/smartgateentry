@@ -272,26 +272,74 @@ const NewVisitorPage = () => {
                         {showCamera ? (
                             <div className="camera-section">
                                 <div style={{ marginBottom: 'var(--space-3)', textAlign: 'center' }}>
-                                    <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center', marginBottom: 'var(--space-2)' }}>
-                                        <button
-                                            type="button"
-                                            className={`btn ${!useSimpleCamera ? 'btn-primary' : 'btn-outline'}`}
-                                            onClick={() => setUseSimpleCamera(false)}
-                                            style={{ fontSize: '0.85rem', padding: 'var(--space-2) var(--space-3)' }}
-                                        >
-                                            Advanced Camera
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={`btn ${useSimpleCamera ? 'btn-primary' : 'btn-outline'}`}
-                                            onClick={() => setUseSimpleCamera(true)}
-                                            style={{ fontSize: '0.85rem', padding: 'var(--space-2) var(--space-3)' }}
-                                        >
-                                            Simple Camera
-                                        </button>
+                                    {/* Camera Mode Toggle */}
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center', 
+                                        gap: 'var(--space-3)',
+                                        marginBottom: 'var(--space-2)',
+                                        flexWrap: 'wrap'
+                                    }}>
+                                        <span style={{ 
+                                            fontSize: '0.875rem', 
+                                            color: 'var(--text-secondary)',
+                                            fontWeight: '500'
+                                        }}>
+                                            Advanced
+                                        </span>
+                                        <label style={{
+                                            position: 'relative',
+                                            display: 'inline-block',
+                                            width: '50px',
+                                            height: '24px',
+                                            cursor: 'pointer'
+                                        }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={useSimpleCamera}
+                                                onChange={(e) => setUseSimpleCamera(e.target.checked)}
+                                                style={{ opacity: 0, width: 0, height: 0 }}
+                                            />
+                                            <span style={{
+                                                position: 'absolute',
+                                                cursor: 'pointer',
+                                                top: 0,
+                                                left: 0,
+                                                right: 0,
+                                                bottom: 0,
+                                                backgroundColor: useSimpleCamera ? 'var(--primary-500)' : 'var(--gray-300)',
+                                                transition: 'all 0.3s ease',
+                                                borderRadius: '24px'
+                                            }}></span>
+                                            <span style={{
+                                                position: 'absolute',
+                                                content: '""',
+                                                height: '18px',
+                                                width: '18px',
+                                                left: useSimpleCamera ? '26px' : '3px',
+                                                bottom: '3px',
+                                                backgroundColor: 'white',
+                                                transition: 'all 0.3s ease',
+                                                borderRadius: '50%',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                            }}></span>
+                                        </label>
+                                        <span style={{ 
+                                            fontSize: '0.875rem', 
+                                            color: 'var(--text-secondary)',
+                                            fontWeight: '500'
+                                        }}>
+                                            Simple
+                                        </span>
                                     </div>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                        {useSimpleCamera ? 'More reliable, fewer features' : 'Full features, may have compatibility issues'}
+                                    <p style={{ 
+                                        margin: 0, 
+                                        fontSize: '0.8rem', 
+                                        color: 'var(--text-secondary)',
+                                        lineHeight: '1.4'
+                                    }}>
+                                        {useSimpleCamera ? '📱 More reliable for mobile devices' : '⚡ Full features with camera switching'}
                                     </p>
                                 </div>
 
