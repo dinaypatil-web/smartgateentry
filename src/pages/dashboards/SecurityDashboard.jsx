@@ -103,6 +103,7 @@ const NewVisitorPage = () => {
     const [photo, setPhoto] = useState(null);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Detect if device is mobile
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -157,11 +158,19 @@ const NewVisitorPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Prevent multiple submissions
+        if (isSubmitting) {
+            return;
+        }
+        
         setError('');
         setSuccess('');
+        setIsSubmitting(true);
 
         if (!formData.name || !formData.residentId) {
             setError('Please fill in all required fields');
+            setIsSubmitting(false);
             return;
         }
 
@@ -177,12 +186,14 @@ const NewVisitorPage = () => {
             // Validate residentId is present
             if (!formData.residentId) {
                 setError('Please select a resident to visit');
+                setIsSubmitting(false);
                 return;
             }
 
             // Validate photo if present
             if (photo && !photo.startsWith('data:image/')) {
                 setError('Invalid photo format. Please capture the photo again.');
+                setIsSubmitting(false);
                 return;
             }
 
@@ -239,6 +250,8 @@ const NewVisitorPage = () => {
             } else {
                 setError('Failed to create visitor entry. Please try again. If the problem persists, contact support.');
             }
+        } finally {
+            setIsSubmitting(false);
         }
 
         setTimeout(() => setSuccess(''), 3000);
@@ -507,9 +520,31 @@ const NewVisitorPage = () => {
                         </select>
                     </div>
 
-                    <button type="submit" className="btn btn-primary btn-lg w-full mt-6">
-                        <UserPlus size={20} />
-                        Submit Visitor Entry
+                    <button 
+                        type="submit" 
+                        className={`btn btn-primary btn-lg w-full mt-6 ${isSubmitting ? 'btn-loading' : ''}`}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <div className="spinner" style={{ 
+                                    width: '20px', 
+                                    height: '20px', 
+                                    border: '2px solid #ffffff', 
+                                    borderTop: '2px solid transparent', 
+                                    borderRadius: '50%', 
+                                    display: 'inline-block',
+                                    marginRight: '8px',
+                                    animation: 'spin 1s linear infinite'
+                                }}></div>
+                                Submitting...
+                            </>
+                        ) : (
+                            <>
+                                <UserPlus size={20} />
+                                Submit Visitor Entry
+                            </>
+                        )}
                     </button>
                 </form>
             </div>
@@ -972,14 +1007,16 @@ const SecurityDashboard = () => {
         </div>
     );
 };
-
-// Verify Pass Page
 const VerifyPassPage = () => {
     const { currentRole } = useAuth();
     const { preApprovals, updatePreApproval, addVisitor, users } = useData();
     const [passCode, setPassCode] = useState('');
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
+    const [showCamera, setShowCamera] = useState(false);
+    const [photo, setPhoto] = useState(null);
+    const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleVerify = (e) => {
         e.preventDefault();
