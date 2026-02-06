@@ -10,9 +10,10 @@ import EmptyState from '../../components/EmptyState';
 import NoticeBoard from '../../components/NoticeBoard';
 import NoticeForm from '../../components/NoticeForm';
 import BulkUpload from '../../components/BulkUpload';
+import BackupRestore from '../../components/BackupRestore';
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
-    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info, Upload
+    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info, Upload, Database
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import { t } from '../../utils/i18n';
@@ -35,6 +36,7 @@ const sidebarItems = [
             { path: '/notices', label: t('notices'), icon: Megaphone },
             { path: '/analytics', label: t('analytics'), icon: BarChart2 },
             { path: '/integrations', label: 'Integrations', icon: ShieldCheck },
+            { path: '/backup', label: 'Backup & Restore', icon: Database },
             { path: '/my-roles', label: 'My Roles', icon: Users }
         ]
     }
@@ -884,6 +886,7 @@ const AdminDashboard = () => {
                         <Route path="/notices" element={<NoticesPage />} />
                         <Route path="/analytics" element={<AnalyticsPage />} />
                         <Route path="/integrations" element={<IntegrationsPage />} />
+                        <Route path="/backup" element={<BackupPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
                     </Routes>
                 </div>
@@ -1107,6 +1110,17 @@ const IntegrationsPage = () => {
                     </div>
                 ))}
             </div>
+        </div>
+    );
+};
+
+// Backup & Restore Page for Admin
+const BackupPage = () => {
+    const [showBackupModal, setShowBackupModal] = useState(true);
+
+    return (
+        <div>
+            {showBackupModal && <BackupRestore onClose={() => setShowBackupModal(false)} />}
         </div>
     );
 };
