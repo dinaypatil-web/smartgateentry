@@ -509,7 +509,28 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                             📷 {currentCameraInfo}
                         </div>
                     )}
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                        {isStreaming && availableCameras.length > 1 && (
+                            <button
+                                type="button"
+                                className="btn btn-outline"
+                                onClick={() => { const next = !preferBack; setPreferBack(next); switchCamera(next); }}
+                                title={availableCameras.length > 1 ? `Switch to ${preferBack ? 'Front' : 'Rear'} Camera` : 'Switch Camera'}
+                                style={{
+                                    position: 'absolute',
+                                    top: '12px',
+                                    right: '12px',
+                                    zIndex: 2,
+                                    fontSize: '0.875rem',
+                                    padding: 'var(--space-2) var(--space-3)',
+                                    backdropFilter: 'saturate(180%) blur(12px)',
+                                    background: 'var(--bg-glass)'
+                                }}
+                            >
+                                <RotateCcw size={16} />
+                                {preferBack ? 'Front' : 'Rear'}
+                            </button>
+                        )}
                         <video
                             ref={videoRef}
                             className="camera-video"
@@ -559,18 +580,6 @@ const CameraCapture = ({ onCapture, onCancel, useBackCamera = false }) => {
                     }}>
                         {isStreaming ? (
                             <>
-                                {availableCameras.length > 1 && (
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline"
-                                        onClick={() => { const next = !preferBack; setPreferBack(next); switchCamera(next); }}
-                                        title={availableCameras.length > 1 ? `Switch to ${preferBack ? 'Front' : 'Rear'} Camera` : 'Switch Camera'}
-                                        style={{ fontSize: '0.875rem', padding: 'var(--space-2) var(--space-3)' }}
-                                    >
-                                        <RotateCcw size={16} />
-                                        {preferBack ? 'Front' : 'Rear'}
-                                    </button>
-                                )}
                                 <button 
                                     type="button" 
                                     className="btn btn-primary" 
