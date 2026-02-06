@@ -433,38 +433,13 @@ const NewVisitorPage = () => {
                                                 const input = document.createElement('input');
                                                 input.type = 'file';
                                                 input.accept = 'image/*';
-                                                input.capture = 'environment'; // Back camera on mobile
+                                                input.capture = 'environment';
                                                 input.onchange = (e) => {
                                                     const file = e.target.files[0];
                                                     if (file) {
                                                         const reader = new FileReader();
                                                         reader.onload = (event) => {
                                                             setPhoto(event.target.result);
-                                                        };
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                };
-                                                input.click();
-                                            }}
-                                            style={{ flex: 1, minWidth: '150px' }}
-                                        >
-                                            <Camera size={18} />
-                                            Mobile Camera
-                                        </button>
-                                    )}
-                                </div>
-
-                                <input
-                                    id="photo-upload"
-                                    type="file"
-                                    accept="image/*"
-                                    style={{ display: 'none' }}
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            const reader = new FileReader();
-                                            reader.onload = (event) => {
-                                                setPhoto(event.target.result);
                                                         };
                                                         reader.readAsDataURL(file);
                                                     }
