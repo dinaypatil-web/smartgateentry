@@ -11,7 +11,7 @@ import NoticeBoard from '../../components/NoticeBoard';
 import {
     LayoutDashboard, UserCheck, History, Ban,
     Check, X, Unlock, Eye, Phone, MapPin, FileText, Users,
-    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen
+    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
@@ -964,8 +964,45 @@ const ComplaintsPage = () => {
     const { complaints, addDataItem, updateDataItem } = useData();
     const [showAdd, setShowAdd] = useState(false);
     const [formData, setFormData] = useState({ category: 'plumbing', title: '', description: '', priority: 'normal' });
+    const [attachments, setAttachments] = useState([]);
 
     const myComplaints = complaints.filter(c => (c.residentId === currentUser.id || c.residentid === currentUser.id));
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        const validFiles = files.filter(file => {
+            const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf';
+            const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+            
+            if (!isValidType) {
+                alert(`${file.name} is not a valid file type. Only images and PDFs are allowed.`);
+                return false;
+            }
+            if (!isValidSize) {
+                alert(`${file.name} is too large. Maximum file size is 5MB.`);
+                return false;
+            }
+            return true;
+        });
+
+        // Convert files to base64
+        validFiles.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setAttachments(prev => [...prev, {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: event.target.result
+                }]);
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removeAttachment = (index) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -974,10 +1011,12 @@ const ComplaintsPage = () => {
             residentId: currentUser.id,
             societyId: currentRole.societyId,
             status: 'open',
+            attachments: attachments,
             createdAt: new Date().toISOString()
         });
         setShowAdd(false);
         setFormData({ category: 'plumbing', title: '', description: '', priority: 'normal' });
+        setAttachments([]);
     };
 
     return (
@@ -1018,6 +1057,33 @@ const ComplaintsPage = () => {
                                 </div>
                             </div>
                             <div className="mt-4 p-4 bg-glass rounded-lg text-sm">{complaint.description}</div>
+                            
+                            {/* Display Attachments */}
+                            {complaint.attachments && complaint.attachments.length > 0 && (
+                                <div className="mt-4">
+                                    <div className="text-xs font-bold text-muted mb-2">ATTACHMENTS ({complaint.attachments.length})</div>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {complaint.attachments.map((file, idx) => (
+                                            <a
+                                                key={idx}
+                                                href={file.data}
+                                                download={file.name}
+                                                className="flex items-center gap-2 px-3 py-2 bg-glass rounded-lg text-sm hover:bg-primary-900/30 transition-colors"
+                                                style={{ textDecoration: 'none' }}
+                                            >
+                                                {file.type.startsWith('image/') ? (
+                                                    <FileImage size={16} />
+                                                ) : (
+                                                    <FileText size={16} />
+                                                )}
+                                                <span>{file.name}</span>
+                                                <span className="text-xs text-muted">({(file.size / 1024).toFixed(1)}KB)</span>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
                             {complaint.remarks && (
                                 <div className="mt-4 p-4 bg-primary-900/30 border-l-4 border-primary-500 rounded-r-lg">
                                     <div className="text-xs font-bold text-primary-400 mb-1">ADMIN REMARKS</div>
@@ -1029,7 +1095,7 @@ const ComplaintsPage = () => {
                 </div>
             )}
 
-            <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Raise New Support Request">
+            <Modal isOpen={showAdd} onClose={() => { setShowAdd(false); setAttachments([]); }} title="Raise New Support Request">
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label className="form-label">Subject *</label>
@@ -1059,6 +1125,100 @@ const ComplaintsPage = () => {
                         <label className="form-label">Description *</label>
                         <textarea className="form-input" rows="4" placeholder="Describe the issue in detail..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required></textarea>
                     </div>
+                    
+                    {/* File Attachments */}
+                    <div className="form-group">
+                        <label className="form-label">Attachments (Images/PDF)</label>
+                        <div style={{
+                            border: '2px dashed var(--border-color)',
+                            borderRadius: 'var(--radius-md)',
+                            padding: 'var(--space-4)',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = 'var(--primary-500)';
+                            e.currentTarget.style.background = 'var(--primary-900/10)';
+                        }}
+                        onDragLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                            e.currentTarget.style.background = 'transparent';
+                        }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                            e.currentTarget.style.background = 'transparent';
+                            const files = e.dataTransfer.files;
+                            handleFileChange({ target: { files } });
+                        }}
+                        onClick={() => document.getElementById('complaint-file-input').click()}>
+                            <FileText size={32} style={{ margin: '0 auto 8px', color: 'var(--text-secondary)' }} />
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                Click to upload or drag and drop
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                                Images (JPG, PNG) or PDF (Max 5MB each)
+                            </div>
+                        </div>
+                        <input
+                            id="complaint-file-input"
+                            type="file"
+                            accept="image/*,.pdf"
+                            multiple
+                            onChange={handleFileChange}
+                            style={{ display: 'none' }}
+                        />
+                        
+                        {/* Display Selected Files */}
+                        {attachments.length > 0 && (
+                            <div style={{ marginTop: 'var(--space-3)' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: 'var(--space-2)', color: 'var(--text-secondary)' }}>
+                                    SELECTED FILES ({attachments.length})
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                                    {attachments.map((file, idx) => (
+                                        <div key={idx} style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: 'var(--space-2) var(--space-3)',
+                                            background: 'var(--bg-glass)',
+                                            borderRadius: 'var(--radius-md)',
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                                                {file.type.startsWith('image/') ? (
+                                                    <FileImage size={16} />
+                                                ) : (
+                                                    <FileText size={16} />
+                                                )}
+                                                <span>{file.name}</span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                                                    ({(file.size / 1024).toFixed(1)}KB)
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAttachment(idx)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    color: 'var(--error-500)',
+                                                    padding: '4px'
+                                                }}
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    
                     <button type="submit" className="btn btn-primary w-full mt-4">Submit Complaint</button>
                 </form>
             </Modal>

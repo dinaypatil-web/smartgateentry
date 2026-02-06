@@ -456,14 +456,34 @@ const NewVisitorPage = () => {
 
                     <div className="form-group">
                         <label className="form-label">Purpose of Visit</label>
-                        <input
-                            type="text"
+                        <select
                             name="purpose"
-                            className="form-input"
-                            placeholder="e.g., Delivery, Personal, Service"
+                            className="form-select"
                             value={formData.purpose}
                             onChange={handleChange}
-                        />
+                        >
+                            <option value="">Select purpose of visit</option>
+                            <option value="Personal Visit">Personal Visit</option>
+                            <option value="Delivery">Delivery</option>
+                            <option value="Courier">Courier</option>
+                            <option value="Service/Repair">Service/Repair</option>
+                            <option value="Plumber">Plumber</option>
+                            <option value="Electrician">Electrician</option>
+                            <option value="Carpenter">Carpenter</option>
+                            <option value="Painter">Painter</option>
+                            <option value="Cleaning Service">Cleaning Service</option>
+                            <option value="Pest Control">Pest Control</option>
+                            <option value="Internet/Cable Service">Internet/Cable Service</option>
+                            <option value="Appliance Repair">Appliance Repair</option>
+                            <option value="Business Meeting">Business Meeting</option>
+                            <option value="Real Estate Agent">Real Estate Agent</option>
+                            <option value="Healthcare Professional">Healthcare Professional</option>
+                            <option value="Tutor/Teacher">Tutor/Teacher</option>
+                            <option value="Domestic Help">Domestic Help</option>
+                            <option value="Guest/Relative">Guest/Relative</option>
+                            <option value="Contractor">Contractor</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
 
                     <div className="form-group">

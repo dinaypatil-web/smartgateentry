@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import * as storage from '../utils/storage';
 import * as storageApi from '../utils/storageApi';
+import * as notificationService from '../utils/notificationService';
 
 const DataContext = createContext(null);
 
@@ -292,6 +293,18 @@ export const DataProvider = ({ children }) => {
                 console.log('DataContext: Local storage result:', result);
             }
 
+            // Send WhatsApp notification to resident
+            try {
+                const resident = users.find(u => u.id === visitor.residentId);
+                if (resident && resident.mobile) {
+                    console.log('Sending visitor entry notification to resident:', resident.name);
+                    await notificationService.notifyVisitorEntry(visitor, resident);
+                }
+            } catch (notifError) {
+                console.error('Failed to send visitor notification:', notifError);
+                // Don't fail the visitor creation if notification fails
+            }
+
             // Force refresh to ensure all components get updated data
             console.log('DataContext: Refreshing data after visitor creation...');
             await refreshData();
@@ -319,6 +332,23 @@ export const DataProvider = ({ children }) => {
         } else {
             storage.updateVisitor(id, updates);
         }
+        
+        // Send notification if visitor status changed to approved or rejected
+        try {
+            if (updates.status === 'approved' || updates.status === 'rejected') {
+                const resident = users.find(u => u.id === visitor.residentId || u.id === visitor.residentid);
+                if (resident && visitor.contactNumber) {
+                    if (updates.status === 'approved') {
+                        await notificationService.notifyVisitorApproved(visitor, resident);
+                    } else {
+                        await notificationService.notifyVisitorRejected(visitor, resident);
+                    }
+                }
+            }
+        } catch (notifError) {
+            console.error('Failed to send visitor status notification:', notifError);
+        }
+        
         await refreshData();
     };
 
@@ -350,6 +380,22 @@ export const DataProvider = ({ children }) => {
         } else {
             storage.addNotice(notice);
         }
+        
+        // Send WhatsApp notification to all society residents
+        try {
+            const society = societies.find(s => s.id === notice.societyId);
+            const societyResidents = users.filter(u =>
+                u.roles.some(r => r.role === 'resident' && r.societyId === notice.societyId && r.status === 'approved')
+            );
+            
+            if (society && societyResidents.length > 0) {
+                console.log(`Sending notice notification to ${societyResidents.length} residents`);
+                await notificationService.notifyNewNotice(notice, society, societyResidents);
+            }
+        } catch (notifError) {
+            console.error('Failed to send notice notifications:', notifError);
+        }
+        
         await refreshData();
         return notice;
     };
