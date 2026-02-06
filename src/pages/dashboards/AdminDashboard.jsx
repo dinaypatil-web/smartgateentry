@@ -8,10 +8,11 @@ import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import NoticeBoard from '../../components/NoticeBoard';
-import NoticeForm from '../../components/NoticeForm'; // Added NoticeForm import
+import NoticeForm from '../../components/NoticeForm';
+import BulkUpload from '../../components/BulkUpload';
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
-    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info
+    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info, Upload
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import { t } from '../../utils/i18n';
@@ -359,6 +360,7 @@ const ResidentsPage = () => {
     const { currentRole } = useAuth();
     const { users, updateUser, deleteUserById, getSocietyById } = useData();
     const [deleteConfirm, setDeleteConfirm] = useState(null);
+    const [showBulkUpload, setShowBulkUpload] = useState(false);
 
     const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
     const residents = users.filter(u =>
@@ -401,7 +403,15 @@ const ResidentsPage = () => {
 
     return (
         <div>
-            <h2 className="mb-6">Manage Residents</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
+                <h2>Manage Residents</h2>
+                <button className="btn btn-primary" onClick={() => setShowBulkUpload(true)}>
+                    <Upload size={18} />
+                    Bulk Upload
+                </button>
+            </div>
+
+            {showBulkUpload && <BulkUpload onClose={() => setShowBulkUpload(false)} />}
 
             {residents.length === 0 ? (
                 <EmptyState
@@ -512,6 +522,7 @@ const SecurityPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [error, setError] = useState('');
+    const [showBulkUpload, setShowBulkUpload] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         mobile: '',
@@ -558,11 +569,19 @@ const SecurityPage = () => {
         <div>
             <div className="flex-between mb-6">
                 <h2>Security Personnel</h2>
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                    <Plus size={18} />
-                    Add Security
-                </button>
+                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                    <button className="btn btn-secondary" onClick={() => setShowBulkUpload(true)}>
+                        <Upload size={18} />
+                        Bulk Upload
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                        <Plus size={18} />
+                        Add Security
+                    </button>
+                </div>
             </div>
+
+            {showBulkUpload && <BulkUpload onClose={() => setShowBulkUpload(false)} />}
 
             {securityPersonnel.length === 0 ? (
                 <EmptyState
@@ -1194,6 +1213,7 @@ const StaffAdminPage = () => {
     const { currentRole } = useAuth();
     const { staff, addDataItem, deleteDataItem } = useData();
     const [showAdd, setShowAdd] = useState(false);
+    const [showBulkUpload, setShowBulkUpload] = useState(false);
     const [formData, setFormData] = useState({ name: '', role: '', mobile: '', isGateAllowed: true });
 
     const societyStaff = staff.filter(s => (s.societyId === currentRole.societyId || s.societyid === currentRole.societyId));
@@ -1214,11 +1234,19 @@ const StaffAdminPage = () => {
         <div>
             <div className="flex-between mb-6">
                 <h2>Manage Society Staff</h2>
-                <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
-                    <Plus size={18} />
-                    Register Staff
-                </button>
+                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                    <button className="btn btn-secondary" onClick={() => setShowBulkUpload(true)}>
+                        <Upload size={18} />
+                        Bulk Upload
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+                        <Plus size={18} />
+                        Register Staff
+                    </button>
+                </div>
             </div>
+
+            {showBulkUpload && <BulkUpload onClose={() => setShowBulkUpload(false)} />}
 
             {societyStaff.length === 0 ? (
                 <EmptyState icon={Contact} title="No Staff" description="Register staff members like sweepers, plumbers, and daily help." />

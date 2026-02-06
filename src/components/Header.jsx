@@ -92,7 +92,7 @@ const Header = ({ title }) => {
 
                 <button
                     className="btn btn-danger btn-sm pulse"
-                    style={{ borderRadius: 'var(--radius-full)', fontWeight: 'bold' }}
+                    style={{ borderRadius: 'var(--radius-full)', fontWeight: 'bold', position: 'relative', zIndex: 100 }}
                     onClick={handleTriggerSOS}
                     disabled={isTriggeringSOS}
                 >
