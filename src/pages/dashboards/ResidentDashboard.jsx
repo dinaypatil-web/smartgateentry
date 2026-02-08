@@ -10,10 +10,11 @@ import EmptyState from '../../components/EmptyState';
 import NoticeBoard from '../../components/NoticeBoard';
 import AddToDirectoryPrompt from '../../components/AddToDirectoryPrompt';
 import CommonDirectory from '../../components/CommonDirectory';
+import CommunityBoard from '../../components/CommunityBoard';
 import {
     LayoutDashboard, UserCheck, History, Ban,
     Check, X, Unlock, Eye, Phone, MapPin, FileText, Users,
-    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage, Briefcase
+    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage, Briefcase, Package
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
@@ -31,6 +32,7 @@ const sidebarItems = [
             { path: '/vehicles', label: 'My Vehicles', icon: Car },
             { path: '/amenities', label: 'Amenities', icon: Building2 },
             { path: '/directory', label: 'Common Directory', icon: Briefcase },
+            { path: '/community-board', label: 'Community Board', icon: Package },
             { path: '/staff', label: 'Staff Directory', icon: Contact },
             { path: '/docs', label: 'Knowledge Hub', icon: BookOpen },
             { path: '/complaints', label: 'Helpdesk', icon: ClipboardList },
@@ -699,6 +701,7 @@ const ResidentDashboard = () => {
                         <Route path="/vehicles" element={<VehiclesPage />} />
                         <Route path="/amenities" element={<AmenitiesPage />} />
                         <Route path="/directory" element={<CommonDirectory />} />
+                        <Route path="/community-board" element={<CommunityBoard />} />
                         <Route path="/staff" element={<StaffPage />} />
                         <Route path="/docs" element={<KnowledgeHubPage />} />
                         <Route path="/complaints" element={<ComplaintsPage />} />

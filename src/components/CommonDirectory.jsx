@@ -17,6 +17,8 @@ const CommonDirectory = () => {
     const [editingEntry, setEditingEntry] = useState(null);
     const [showRatingModal, setShowRatingModal] = useState(null);
     const [showReviewsModal, setShowReviewsModal] = useState(null);
+    const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+    const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
     const [ratingData, setRatingData] = useState({ rating: 5, review: '' });
     const [formData, setFormData] = useState({
         name: '',
@@ -54,7 +56,10 @@ const CommonDirectory = () => {
     // Load directory on mount
     useEffect(() => {
         loadDirectory();
-    }, []);
+        // Check if user has accepted disclaimer
+        const accepted = localStorage.getItem(`directory_disclaimer_accepted_${currentUser?.id}`);
+        setDisclaimerAccepted(accepted === 'true');
+    }, [currentUser]);
 
     const loadDirectory = async () => {
         try {
@@ -229,10 +234,43 @@ const CommonDirectory = () => {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
                 <h2>Common Directory</h2>
-                <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                <button className="btn btn-primary" onClick={() => {
+                    if (!disclaimerAccepted) {
+                        setShowDisclaimerModal(true);
+                    } else {
+                        setShowAddModal(true);
+                    }
+                }}>
                     <Plus size={18} />
                     Add Service Provider
                 </button>
+            </div>
+
+            {/* Disclaimer Alert */}
+            <div className="alert alert-warning" style={{ marginBottom: 'var(--space-4)' }}>
+                <AlertCircle size={20} />
+                <div>
+                    <strong>⚠️ Important Disclaimer</strong>
+                    <p style={{ marginTop: 'var(--space-1)', fontSize: 'var(--font-size-sm)' }}>
+                        This directory is for information sharing only. The society/management is NOT responsible for the quality, 
+                        reliability, or conduct of service providers. Users must verify credentials and exercise caution.
+                        <button 
+                            onClick={() => setShowDisclaimerModal(true)}
+                            style={{ 
+                                marginLeft: 'var(--space-2)', 
+                                color: 'var(--primary-500)', 
+                                textDecoration: 'underline',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: 'var(--font-size-sm)',
+                                padding: 0
+                            }}
+                        >
+                            Read Full Terms
+                        </button>
+                    </p>
+                </div>
             </div>
 
             {/* Info Alert */}
@@ -289,7 +327,13 @@ const CommonDirectory = () => {
                         ? "No providers match your search criteria."
                         : "Be the first to add a trusted service provider to help your community!"}
                     action={
-                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                        <button className="btn btn-primary" onClick={() => {
+                            if (!disclaimerAccepted) {
+                                setShowDisclaimerModal(true);
+                            } else {
+                                setShowAddModal(true);
+                            }
+                        }}>
                             <Plus size={18} />
                             Add Service Provider
                         </button>
@@ -687,6 +731,170 @@ const CommonDirectory = () => {
                             Close
                         </button>
                     </div>
+                </div>
+            </Modal>
+
+            {/* Disclaimer Modal */}
+            <Modal
+                isOpen={showDisclaimerModal}
+                onClose={() => setShowDisclaimerModal(false)}
+                title="⚠️ Common Directory - Terms & Disclaimer"
+            >
+                <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                    <div className="alert alert-warning" style={{ marginBottom: 'var(--space-4)' }}>
+                        <AlertCircle size={20} />
+                        <div>
+                            <strong>Please Read Carefully</strong>
+                            <p style={{ marginTop: 'var(--space-1)', fontSize: 'var(--font-size-sm)' }}>
+                                By adding service providers to this directory, you agree to these terms and understand the limitations.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style={{ fontSize: 'var(--font-size-sm)', lineHeight: 1.6 }}>
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>1. Directory Purpose</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            The Common Directory is a FREE information-sharing platform for residents to share contact details of service providers 
+                            they have used or recommend. It is NOT an endorsement or guarantee of service quality.
+                        </p>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>2. No Liability</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            <strong>The society, management, and app developers are NOT responsible for:</strong>
+                        </p>
+                        <ul style={{ marginBottom: 'var(--space-3)', paddingLeft: 'var(--space-6)' }}>
+                            <li>Quality, reliability, or professionalism of service providers</li>
+                            <li>Accuracy of contact information or service descriptions</li>
+                            <li>Work performed by service providers</li>
+                            <li>Pricing, billing, or payment disputes</li>
+                            <li>Damages, losses, or injuries caused by service providers</li>
+                            <li>Fraud, scams, or misconduct by service providers</li>
+                            <li>Data misuse or privacy breaches</li>
+                            <li>Ratings and reviews (user opinions only)</li>
+                        </ul>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>3. User Responsibility</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            <strong>You are solely responsible for:</strong>
+                        </p>
+                        <ul style={{ marginBottom: 'var(--space-3)', paddingLeft: 'var(--space-6)' }}>
+                            <li>Verifying credentials and background of service providers</li>
+                            <li>Checking references and past work</li>
+                            <li>Negotiating prices and terms of service</li>
+                            <li>Ensuring proper contracts and agreements</li>
+                            <li>Supervising work and ensuring quality</li>
+                            <li>Protecting your property and belongings</li>
+                            <li>Accuracy of information you add to directory</li>
+                            <li>Getting permission before adding someone's contact details</li>
+                        </ul>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>4. Privacy & Data Protection</h3>
+                        <ul style={{ marginBottom: 'var(--space-3)', paddingLeft: 'var(--space-6)' }}>
+                            <li>Only add publicly available contact information</li>
+                            <li>Get consent before adding someone's details</li>
+                            <li>Information is visible to all society residents</li>
+                            <li>Do NOT add sensitive personal information</li>
+                            <li>Contact details may be used by residents to reach providers</li>
+                            <li>You are responsible for respecting others' privacy</li>
+                        </ul>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>5. Ratings & Reviews</h3>
+                        <ul style={{ marginBottom: 'var(--space-3)', paddingLeft: 'var(--space-6)' }}>
+                            <li>Ratings and reviews are personal opinions only</li>
+                            <li>Society/management does not verify or endorse reviews</li>
+                            <li>Be honest and fair in your reviews</li>
+                            <li>Do not post false, defamatory, or malicious reviews</li>
+                            <li>Reviews may be removed if inappropriate</li>
+                        </ul>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>6. Verification Badge</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            The "Verified" badge indicates administrative verification of basic information only. 
+                            It does NOT guarantee quality, reliability, or endorse the service provider.
+                        </p>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>7. Prohibited Activities</h3>
+                        <p style={{ marginBottom: 'var(--space-2)' }}>
+                            <strong>The following are strictly prohibited:</strong>
+                        </p>
+                        <ul style={{ marginBottom: 'var(--space-3)', paddingLeft: 'var(--space-6)' }}>
+                            <li>Adding fake or fraudulent service providers</li>
+                            <li>Adding contact details without permission</li>
+                            <li>Posting false or misleading information</li>
+                            <li>Harassment or defamation</li>
+                            <li>Spam or duplicate entries</li>
+                            <li>Sharing others' personal information maliciously</li>
+                            <li>Commercial advertising (unless genuine service)</li>
+                        </ul>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>8. Safety Guidelines</h3>
+                        <ul style={{ marginBottom: 'var(--space-3)', paddingLeft: 'var(--space-6)' }}>
+                            <li>Always verify identity and credentials</li>
+                            <li>Check references from other users</li>
+                            <li>Get written quotes and agreements</li>
+                            <li>Never pay full amount in advance</li>
+                            <li>Supervise work being done</li>
+                            <li>Keep valuables secure during service</li>
+                            <li>Report suspicious behavior immediately</li>
+                            <li>Trust your instincts - if unsure, don't proceed</li>
+                        </ul>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>9. Content Moderation</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            The society management reserves the right to remove any entry, rating, or review that violates these terms 
+                            or is deemed inappropriate, without prior notice.
+                        </p>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>10. No Warranty</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            The directory is provided "AS IS" without any warranties. We do not guarantee the accuracy, 
+                            reliability, or availability of information.
+                        </p>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>11. Dispute Resolution</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            Any disputes with service providers must be resolved directly between you and the provider. 
+                            The society management is not obligated to mediate or resolve such disputes.
+                        </p>
+
+                        <h3 style={{ marginBottom: 'var(--space-3)' }}>12. Changes to Terms</h3>
+                        <p style={{ marginBottom: 'var(--space-3)' }}>
+                            These terms may be updated at any time. Continued use of the directory constitutes acceptance of updated terms.
+                        </p>
+
+                        <div className="alert alert-danger" style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+                            <AlertCircle size={20} />
+                            <div>
+                                <strong>⚠️ Final Warning</strong>
+                                <p style={{ marginTop: 'var(--space-1)' }}>
+                                    By clicking "I Accept", you acknowledge that you have read, understood, and agree to these terms. 
+                                    You understand that the directory is for information sharing only and the society/management bears NO responsibility 
+                                    for service quality, disputes, or any issues with service providers.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end', marginTop: 'var(--space-6)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--border-color)' }}>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => setShowDisclaimerModal(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => {
+                            setDisclaimerAccepted(true);
+                            localStorage.setItem(`directory_disclaimer_accepted_${currentUser?.id}`, 'true');
+                            setShowDisclaimerModal(false);
+                            setShowAddModal(true);
+                        }}
+                    >
+                        <CheckCircle size={18} />
+                        I Accept - Proceed to Add
+                    </button>
                 </div>
             </Modal>
         </div>

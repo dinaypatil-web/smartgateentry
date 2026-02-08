@@ -15,8 +15,40 @@ The Common Directory is a community-shared database of trusted service providers
 ✅ **Ratings & Reviews**: Rate providers (1-5 stars) and write detailed reviews  
 ✅ **Verified Badges**: Admin-verified providers get special badge  
 ✅ **Share Providers**: Share provider details via native share or clipboard  
+✅ **Clear Disclaimer**: Comprehensive terms to protect users and management  
 
 ## How to Use
+
+### Important Disclaimer - First Time Use
+
+**⚠️ Before adding your first service provider, you must read and accept the terms and disclaimer.**
+
+1. Navigate to **Common Directory** from sidebar
+2. Notice the **warning banner** at top (always visible)
+3. Click **"Add Service Provider"** button
+4. **Disclaimer modal appears** (first time only)
+5. **Read all terms carefully**:
+   - Directory purpose and limitations
+   - No liability for service quality
+   - Your responsibilities as a user
+   - Privacy and data protection
+   - Ratings and reviews disclaimer
+   - Verification badge meaning
+   - Prohibited activities
+   - Safety guidelines for hiring services
+6. Click **"I Accept - Proceed to Add"**
+7. Disclaimer acceptance is saved (won't show again)
+
+**Note**: You can always view the full disclaimer by clicking "Read Full Terms" in the warning banner.
+
+### Key Points to Remember
+
+- ⚠️ **No Guarantee**: Society/management does NOT guarantee service quality
+- ⚠️ **Your Responsibility**: You must verify credentials and check references
+- ⚠️ **Ratings Are Opinions**: Reviews are personal opinions, not verified facts
+- ⚠️ **Verification Badge**: Only confirms basic info, not quality guarantee
+- ⚠️ **Get Permission**: Ask before adding someone's contact details
+- ⚠️ **Stay Safe**: Follow safety guidelines when hiring services
 
 ### Accessing the Directory
 
