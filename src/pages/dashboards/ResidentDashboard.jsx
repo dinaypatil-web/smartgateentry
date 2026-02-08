@@ -8,10 +8,12 @@ import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import NoticeBoard from '../../components/NoticeBoard';
+import AddToDirectoryPrompt from '../../components/AddToDirectoryPrompt';
+import CommonDirectory from '../../components/CommonDirectory';
 import {
     LayoutDashboard, UserCheck, History, Ban,
     Check, X, Unlock, Eye, Phone, MapPin, FileText, Users,
-    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage
+    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage, Briefcase
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
@@ -28,6 +30,7 @@ const sidebarItems = [
             { path: '/invites', label: 'Invites', icon: Ticket },
             { path: '/vehicles', label: 'My Vehicles', icon: Car },
             { path: '/amenities', label: 'Amenities', icon: Building2 },
+            { path: '/directory', label: 'Common Directory', icon: Briefcase },
             { path: '/staff', label: 'Staff Directory', icon: Contact },
             { path: '/docs', label: 'Knowledge Hub', icon: BookOpen },
             { path: '/complaints', label: 'Helpdesk', icon: ClipboardList },
@@ -136,11 +139,12 @@ const DashboardHome = () => {
 
 // Pending Approvals
 const PendingPage = () => {
-    const { currentUser } = useAuth();
-    const { visitors, updateVisitor, refreshData } = useData();
+    const { currentUser, currentRole } = useAuth();
+    const { visitors, updateVisitor, refreshData, addDataItem } = useData();
     const [selectedVisitor, setSelectedVisitor] = useState(null);
     const [showBlockConfirm, setShowBlockConfirm] = useState(null);
     const [lastRefresh, setLastRefresh] = useState(Date.now());
+    const [showDirectoryPrompt, setShowDirectoryPrompt] = useState(null);
 
     // Auto-refresh every 30 seconds to check for new visitors
     useEffect(() => {
@@ -172,8 +176,48 @@ const PendingPage = () => {
         setLastRefresh(Date.now());
     };
 
-    const handleApprove = (visitorId) => {
-        updateVisitor(visitorId, { status: 'approved' });
+    // Check if visitor should be suggested for directory
+    const shouldSuggestDirectory = (visitor) => {
+        const serviceKeywords = [
+            'plumber', 'electrician', 'carpenter', 'painter', 'cleaning', 'cleaner',
+            'pest', 'repair', 'ac', 'appliance', 'internet', 'cable', 'doctor',
+            'nurse', 'tutor', 'teacher', 'healthcare', 'medical', 'service'
+        ];
+        
+        const purpose = (visitor.purpose || '').toLowerCase();
+        return serviceKeywords.some(keyword => purpose.includes(keyword));
+    };
+
+    const handleApprove = async (visitorId) => {
+        await updateVisitor(visitorId, { status: 'approved' });
+        
+        // Check if we should suggest adding to directory
+        const visitor = visitors.find(v => v.id === visitorId);
+        if (visitor && shouldSuggestDirectory(visitor)) {
+            setShowDirectoryPrompt(visitor);
+        }
+    };
+
+    const handleAddToDirectory = async (directoryData) => {
+        try {
+            const societyId = currentRole?.societyId || currentRole?.societyid;
+            await addDataItem('common_directory', {
+                ...directoryData,
+                societyId: societyId,
+                addedBy: currentUser.id,
+                addedByName: currentUser.name,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                verified: false,
+                ratings: [],
+                averageRating: 0
+            });
+            setShowDirectoryPrompt(null);
+            alert('Service provider added to Common Directory!');
+        } catch (error) {
+            console.error('Error adding to directory:', error);
+            alert('Failed to add to directory. Please try again.');
+        }
     };
 
     const handleReject = (visitorId) => {
@@ -361,6 +405,16 @@ const PendingPage = () => {
                 confirmText="Block"
                 variant="danger"
             />
+
+            {/* Add to Directory Prompt */}
+            {showDirectoryPrompt && (
+                <AddToDirectoryPrompt
+                    visitor={showDirectoryPrompt}
+                    onAdd={handleAddToDirectory}
+                    onSkip={() => setShowDirectoryPrompt(null)}
+                    onClose={() => setShowDirectoryPrompt(null)}
+                />
+            )}
         </div>
     );
 };
@@ -644,6 +698,7 @@ const ResidentDashboard = () => {
                         <Route path="/invites" element={<InvitesPage />} />
                         <Route path="/vehicles" element={<VehiclesPage />} />
                         <Route path="/amenities" element={<AmenitiesPage />} />
+                        <Route path="/directory" element={<CommonDirectory />} />
                         <Route path="/staff" element={<StaffPage />} />
                         <Route path="/docs" element={<KnowledgeHubPage />} />
                         <Route path="/complaints" element={<ComplaintsPage />} />
