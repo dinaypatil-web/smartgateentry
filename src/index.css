@@ -145,6 +145,10 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+    /* Mobile Navigation Constants */
+    --bottom-nav-height: 64px;
+    --bottom-nav-safe-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
 /* ===== Reset & Base Styles ===== */
@@ -1317,9 +1321,11 @@ a:hover {
     width: 100%;
     max-width: 100%;
 }
+
 .camera-video {
     display: block;
 }
+
 .camera-preview {
     max-width: 100%;
     height: auto;
@@ -1328,6 +1334,7 @@ a:hover {
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
 }
+
 .camera-controls {
     display: flex;
     gap: var(--space-3);
@@ -1335,6 +1342,7 @@ a:hover {
     flex-wrap: wrap;
     margin-top: var(--space-4);
 }
+
 .camera-error-container .alert {
     width: 100%;
 }
@@ -1356,12 +1364,13 @@ a:hover {
         flex-direction: row;
         flex-wrap: wrap;
     }
-    
+
     .photo-options-grid .btn {
         flex: 1;
         min-width: 200px;
     }
 }
+
 .empty-state {
     text-align: center;
     padding: var(--space-16) var(--space-8);
@@ -1863,6 +1872,7 @@ a:hover {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -1928,6 +1938,75 @@ a:hover {
     100% {
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
     }
+}
+
+/* ===== Bottom Navigation ===== */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-color);
+    z-index: 50;
+    display: none;
+    /* Desktop hidden */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: var(--bottom-nav-height);
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 500;
+    transition: all var(--transition-base);
+    text-decoration: none;
+}
+
+.bottom-nav-item svg {
+    transition: transform var(--transition-spring);
+}
+
+.bottom-nav-item.active {
+    color: var(--primary-500);
+}
+
+.bottom-nav-item.active svg {
+    transform: translateY(-2px);
+    color: var(--primary-500);
+}
+
+/* Password Toggle Container */
+.password-toggle-group {
+    position: relative;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ===== Mobile-First Responsive Design ===== */
@@ -2235,11 +2314,31 @@ select {
         min-width: 100px;
     }
 
-    /* Grid improvements */
     .grid-2,
     .grid-3 {
         grid-template-columns: 1fr;
         gap: var(--space-4);
+    }
+
+    /* Show Bottom Nav on Mobile */
+    .bottom-nav {
+        display: block;
+    }
+
+    .page-content {
+        padding-bottom: calc(var(--bottom-nav-safe-height) + var(--space-4));
+    }
+
+    /* Adjust SOS FAB to be above bottom nav */
+    .sos-fab {
+        bottom: calc(var(--bottom-nav-safe-height) + 1rem) !important;
+        right: 1rem !important;
+        width: 64px !important;
+        height: 64px !important;
+    }
+
+    .sos-icon span {
+        font-size: 0.65rem !important;
     }
 }
 

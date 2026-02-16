@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
+import BottomNav from '../../components/BottomNav';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
@@ -138,19 +139,19 @@ const NewVisitorPage = () => {
 
     const handlePhotoCapture = (photoData) => {
         console.log('Photo captured, size:', photoData ? photoData.length : 0);
-        
+
         // Validate the captured photo
         if (!photoData || !photoData.startsWith('data:image/')) {
             setError('Invalid photo data captured. Please try again.');
             return;
         }
-        
+
         // Check photo size (warn if > 500KB)
         if (photoData.length > 512000) {
             console.warn('Large photo captured:', photoData.length, 'characters');
             // Could implement compression here if needed
         }
-        
+
         setPhoto(photoData);
         setShowCamera(false);
         setError(''); // Clear any previous errors
@@ -158,12 +159,12 @@ const NewVisitorPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Prevent multiple submissions
         if (isSubmitting) {
             return;
         }
-        
+
         setError('');
         setSuccess('');
         setIsSubmitting(true);
@@ -269,26 +270,26 @@ const NewVisitorPage = () => {
                     {/* Photo Section - Enhanced with multiple capture options */}
                     <div className="form-group">
                         <label className="form-label">Visitor Photo</label>
-                        
+
                         {/* Camera Mode Toggle - Always visible at top */}
-                        <div style={{ 
-                            marginBottom: 'var(--space-3)', 
+                        <div style={{
+                            marginBottom: 'var(--space-3)',
                             textAlign: 'center',
                             padding: 'var(--space-3)',
                             background: 'var(--bg-glass)',
                             borderRadius: 'var(--radius-lg)',
                             border: '1px solid var(--border-color)'
                         }}>
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: 'var(--space-3)',
                                 marginBottom: 'var(--space-2)',
                                 flexWrap: 'wrap'
                             }}>
-                                <span style={{ 
-                                    fontSize: '0.875rem', 
+                                <span style={{
+                                    fontSize: '0.875rem',
                                     color: 'var(--text-secondary)',
                                     fontWeight: '500'
                                 }}>
@@ -331,24 +332,24 @@ const NewVisitorPage = () => {
                                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                                     }}></span>
                                 </label>
-                                <span style={{ 
-                                    fontSize: '0.875rem', 
+                                <span style={{
+                                    fontSize: '0.875rem',
                                     color: 'var(--text-secondary)',
                                     fontWeight: '500'
                                 }}>
                                     Simple
                                 </span>
                             </div>
-                            <p style={{ 
-                                margin: 0, 
-                                fontSize: '0.8rem', 
+                            <p style={{
+                                margin: 0,
+                                fontSize: '0.8rem',
                                 color: 'var(--text-secondary)',
                                 lineHeight: '1.4'
                             }}>
                                 {useSimpleCamera ? '📱 More reliable for mobile devices' : '⚡ Full features with camera switching'}
                             </p>
                         </div>
-                        
+
                         {showCamera ? (
                             <div className="camera-section">
                                 {useSimpleCamera ? (
@@ -596,19 +597,19 @@ const NewVisitorPage = () => {
                         </select>
                     </div>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className={`btn btn-primary btn-lg w-full mt-6 ${isSubmitting ? 'btn-loading' : ''}`}
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? (
                             <>
-                                <div className="spinner" style={{ 
-                                    width: '20px', 
-                                    height: '20px', 
-                                    border: '2px solid #ffffff', 
-                                    borderTop: '2px solid transparent', 
-                                    borderRadius: '50%', 
+                                <div className="spinner" style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    border: '2px solid #ffffff',
+                                    borderTop: '2px solid transparent',
+                                    borderRadius: '50%',
                                     display: 'inline-block',
                                     marginRight: '8px',
                                     animation: 'spin 1s linear infinite'
@@ -1079,6 +1080,7 @@ const SecurityDashboard = () => {
                     </Routes>
                 </div>
             </div>
+            <BottomNav items={sidebarItems} basePath="/security" />
             <SOSAlertOverlay />
         </div>
     );

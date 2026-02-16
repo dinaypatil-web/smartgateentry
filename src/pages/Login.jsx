@@ -104,31 +104,20 @@ const Login = () => {
 
                     <div className="form-group">
                         <label className="form-label">Password</label>
-                        <div style={{ position: 'relative' }}>
+                        <div className="password-toggle-group">
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
-                                className="form-input"
+                                className="form-input pr-12"
                                 placeholder="Enter your password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
-                                style={{ paddingRight: '48px' }}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                style={{
-                                    position: 'absolute',
-                                    right: '12px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--text-muted)',
-                                    cursor: 'pointer',
-                                    padding: '4px'
-                                }}
+                                className="password-toggle-btn"
                             >
                                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                             </button>

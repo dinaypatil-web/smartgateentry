@@ -8,6 +8,7 @@ import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import NoticeBoard from '../../components/NoticeBoard';
+import BottomNav from '../../components/BottomNav';
 import AddToDirectoryPrompt from '../../components/AddToDirectoryPrompt';
 import CommonDirectory from '../../components/CommonDirectory';
 import CommunityBoard from '../../components/CommunityBoard';
@@ -185,14 +186,14 @@ const PendingPage = () => {
             'pest', 'repair', 'ac', 'appliance', 'internet', 'cable', 'doctor',
             'nurse', 'tutor', 'teacher', 'healthcare', 'medical', 'service'
         ];
-        
+
         const purpose = (visitor.purpose || '').toLowerCase();
         return serviceKeywords.some(keyword => purpose.includes(keyword));
     };
 
     const handleApprove = async (visitorId) => {
         await updateVisitor(visitorId, { status: 'approved' });
-        
+
         // Check if we should suggest adding to directory
         const visitor = visitors.find(v => v.id === visitorId);
         if (visitor && shouldSuggestDirectory(visitor)) {
@@ -713,6 +714,8 @@ const ResidentDashboard = () => {
                 </div>
             </div>
 
+            <BottomNav items={sidebarItems} basePath="/resident" />
+
             {/* SOS FAB */}
             <div
                 className={`sos-fab ${isSOSActive ? 'active' : ''}`}
@@ -1031,7 +1034,7 @@ const ComplaintsPage = () => {
         const validFiles = files.filter(file => {
             const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf';
             const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
-            
+
             if (!isValidType) {
                 alert(`${file.name} is not a valid file type. Only images and PDFs are allowed.`);
                 return false;
@@ -1115,7 +1118,7 @@ const ComplaintsPage = () => {
                                 </div>
                             </div>
                             <div className="mt-4 p-4 bg-glass rounded-lg text-sm">{complaint.description}</div>
-                            
+
                             {/* Display Attachments */}
                             {complaint.attachments && complaint.attachments.length > 0 && (
                                 <div className="mt-4">
@@ -1141,7 +1144,7 @@ const ComplaintsPage = () => {
                                     </div>
                                 </div>
                             )}
-                            
+
                             {complaint.remarks && (
                                 <div className="mt-4 p-4 bg-primary-900/30 border-l-4 border-primary-500 rounded-r-lg">
                                     <div className="text-xs font-bold text-primary-400 mb-1">ADMIN REMARKS</div>
@@ -1183,7 +1186,7 @@ const ComplaintsPage = () => {
                         <label className="form-label">Description *</label>
                         <textarea className="form-input" rows="4" placeholder="Describe the issue in detail..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} required></textarea>
                     </div>
-                    
+
                     {/* File Attachments */}
                     <div className="form-group">
                         <label className="form-label">Attachments (Images/PDF)</label>
@@ -1195,23 +1198,23 @@ const ComplaintsPage = () => {
                             cursor: 'pointer',
                             transition: 'all 0.3s ease'
                         }}
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.style.borderColor = 'var(--primary-500)';
-                            e.currentTarget.style.background = 'var(--primary-900/10)';
-                        }}
-                        onDragLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--border-color)';
-                            e.currentTarget.style.background = 'transparent';
-                        }}
-                        onDrop={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.style.borderColor = 'var(--border-color)';
-                            e.currentTarget.style.background = 'transparent';
-                            const files = e.dataTransfer.files;
-                            handleFileChange({ target: { files } });
-                        }}
-                        onClick={() => document.getElementById('complaint-file-input').click()}>
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.style.borderColor = 'var(--primary-500)';
+                                e.currentTarget.style.background = 'var(--primary-900/10)';
+                            }}
+                            onDragLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                e.currentTarget.style.background = 'transparent';
+                                const files = e.dataTransfer.files;
+                                handleFileChange({ target: { files } });
+                            }}
+                            onClick={() => document.getElementById('complaint-file-input').click()}>
                             <FileText size={32} style={{ margin: '0 auto 8px', color: 'var(--text-secondary)' }} />
                             <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                                 Click to upload or drag and drop
@@ -1228,7 +1231,7 @@ const ComplaintsPage = () => {
                             onChange={handleFileChange}
                             style={{ display: 'none' }}
                         />
-                        
+
                         {/* Display Selected Files */}
                         {attachments.length > 0 && (
                             <div style={{ marginTop: 'var(--space-3)' }}>
@@ -1276,7 +1279,7 @@ const ComplaintsPage = () => {
                             </div>
                         )}
                     </div>
-                    
+
                     <button type="submit" className="btn btn-primary w-full mt-4">Submit Complaint</button>
                 </form>
             </Modal>
