@@ -159,6 +159,23 @@ const Login = () => {
                     Don't have an account?{' '}
                     <Link to="/signup">Sign up</Link>
                 </div>
+
+                <div className="separator" style={{ margin: 'var(--space-6) 0', display: 'flex', alignItems: 'center', gap: 'var(--space-4)', opacity: 0.5 }}>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+                    <span style={{ fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', fontWeight: '600' }}>For Visitors</span>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+                </div>
+
+                <div className="text-center">
+                    <Link to="/visitor-self-entry" className="btn btn-outline w-full" style={{ gap: 'var(--space-2)' }}>
+                        <div style={{ background: 'var(--primary-500)', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M12 5v14M5 12h14" />
+                            </svg>
+                        </div>
+                        Visitor Registration
+                    </Link>
+                </div>
             </div>
         </div>
     );
