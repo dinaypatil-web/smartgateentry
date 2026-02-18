@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
-import BottomNav from '../../components/BottomNav';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
@@ -1080,7 +1079,6 @@ const SecurityDashboard = () => {
                     </Routes>
                 </div>
             </div>
-            <BottomNav items={sidebarItems} basePath="/security" />
             <SOSAlertOverlay />
         </div>
     );

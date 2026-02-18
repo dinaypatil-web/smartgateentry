@@ -8,7 +8,6 @@ import Modal, { ConfirmModal } from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import EmptyState from '../../components/EmptyState';
 import NoticeBoard from '../../components/NoticeBoard';
-import BottomNav from '../../components/BottomNav';
 import AddToDirectoryPrompt from '../../components/AddToDirectoryPrompt';
 import CommonDirectory from '../../components/CommonDirectory';
 import CommunityBoard from '../../components/CommunityBoard';
@@ -652,41 +651,13 @@ const BlockedPage = () => {
 
 // Main Dashboard Layout
 const ResidentDashboard = () => {
-    const { currentUser, currentRole, triggerSOS, isSocietyActive, getSocietyById, loading } = useData();
-    const [isSOSActive, setIsSOSActive] = useState(false);
-    const [sosTimer, setSosTimer] = useState(null);
-    const [sosProgress, setSosProgress] = useState(0);
+    const { currentUser, currentRole, isSocietyActive, getSocietyById, loading } = useData();
 
     const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
     const isActive = isSocietyActive(roleSocietyId);
     const society = getSocietyById(roleSocietyId);
 
-    const startSOSTimer = () => {
-        setSosProgress(0);
-        const timer = setInterval(() => {
-            setSosProgress(prev => {
-                if (prev >= 100) {
-                    clearInterval(timer);
-                    handleTriggerSOS();
-                    return 100;
-                }
-                return prev + 5;
-            });
-        }, 100);
-        setSosTimer(timer);
-    };
 
-    const stopSOSTimer = () => {
-        if (sosTimer) clearInterval(sosTimer);
-        setSosTimer(null);
-        setSosProgress(0);
-    };
-
-    const handleTriggerSOS = async () => {
-        await triggerSOS(currentUser.id, currentRole.societyId, "Emergency alert triggered by resident");
-        setIsSOSActive(true);
-        setTimeout(() => setIsSOSActive(false), 5000);
-    };
 
     return (
         <div className="app-container">
@@ -714,101 +685,6 @@ const ResidentDashboard = () => {
                 </div>
             </div>
 
-            <BottomNav items={sidebarItems} basePath="/resident" />
-
-            {/* SOS FAB */}
-            <div
-                className={`sos-fab ${isSOSActive ? 'active' : ''}`}
-                onMouseDown={startSOSTimer}
-                onMouseUp={stopSOSTimer}
-                onMouseLeave={stopSOSTimer}
-                onTouchStart={startSOSTimer}
-                onTouchEnd={stopSOSTimer}
-            >
-                <div className="sos-progress" style={{ height: `${sosProgress}%` }}></div>
-                <div className="sos-icon">
-                    <AlertTriangle size={32} />
-                    <span>SOS</span>
-                </div>
-                {isSOSActive && <div className="sos-status">ALERT SENT!</div>}
-            </div>
-
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                .sos-fab {
-                    position: fixed;
-                    bottom: 2rem;
-                    right: 2rem;
-                    width: 80px;
-                    height: 80px;
-                    background: var(--error-600);
-                    border-radius: 50%;
-                    box-shadow: 0 10px 25px rgba(220, 38, 38, 0.4);
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    z-index: 1000;
-                    overflow: hidden;
-                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    user-select: none;
-                }
-
-                .sos-fab:active {
-                    transform: scale(0.9);
-                }
-
-                .sos-fab.active {
-                    background: #000;
-                    transform: scale(1.1);
-                    animation: pulse-sos 1s infinite;
-                }
-
-                @keyframes pulse-sos {
-                    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-                    70% { box-shadow: 0 0 0 20px rgba(220, 38, 38, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-                }
-
-                .sos-icon {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 2px;
-                    position: relative;
-                    z-index: 2;
-                }
-
-                .sos-icon span {
-                    font-size: 0.75rem;
-                    font-weight: 800;
-                    letter-spacing: 0.1em;
-                }
-
-                .sos-progress {
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                    background: rgba(0, 0, 0, 0.3);
-                    transition: height 0.1s linear;
-                    z-index: 1;
-                }
-
-                .sos-status {
-                    position: absolute;
-                    top: -40px;
-                    right: 0;
-                    background: #000;
-                    color: white;
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 0.75rem;
-                    font-weight: 700;
-                    white-space: nowrap;
-                }
-            ` }} />
         </div>
     );
 };
