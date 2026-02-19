@@ -886,7 +886,7 @@ const AdminDashboard = () => {
                         <Route path="/unblock-requests" element={<UnblockRequestsPage />} />
                         <Route path="/notices" element={<NoticesPage />} />
                         <Route path="/maintenance" element={<MaintenancePage />} />
-                        <Route path="/analytics" element={<DashboardHome />} />
+                        <Route path="/analytics" element={<AnalyticsPage />} />
                         <Route path="/integrations" element={<IntegrationsPage />} />
                         <Route path="/backup" element={<BackupPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
@@ -1279,8 +1279,6 @@ const MaintenancePage = () => {
         </div>
     );
 };
-
-export default AdminDashboard;
 
 // Documents Management for Admin
 const DocumentsAdminPage = () => {
@@ -1688,3 +1686,5 @@ const ComplaintsAdminPage = () => {
         </div>
     );
 };
+
+export default AdminDashboard;

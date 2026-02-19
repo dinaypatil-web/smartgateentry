@@ -680,7 +680,7 @@ const ResidentDashboard = () => {
                         <Route path="/complaints" element={<ComplaintsPage />} />
                         <Route path="/notices" element={<NoticeBoardPage />} />
                         <Route path="/maintenance" element={<MaintenancePage />} />
-                        <Route path="/history" element={<VisitHistoryPage />} />
+                        <Route path="/history" element={<HistoryPage />} />
                         <Route path="/blocked" element={<BlockedPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
                     </Routes>
@@ -1337,8 +1337,6 @@ const MaintenancePage = () => {
     );
 };
 
-export default ResidentDashboard;
-
 // Knowledge Hub / Documents Page
 const KnowledgeHubPage = () => {
     const { currentRole } = useAuth();
@@ -1584,3 +1582,5 @@ const AmenitiesPage = () => {
         </div>
     );
 };
+
+export default ResidentDashboard;
