@@ -148,6 +148,8 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS type text;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS createdat text;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS createdby text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS updatedat text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS updatedby text;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS paymentdate text;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS paymentmethod text;
 

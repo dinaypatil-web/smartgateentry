@@ -51,6 +51,8 @@ const toDb = (data) => {
         'loginName': 'loginname',
         'loginPassword': 'loginpassword',
         'flatNumber': 'flatnumber',
+        'updatedAt': 'updatedat',
+        'updatedBy': 'updatedby',
         'securityQuestion': 'securityquestion',
         'securityAnswer': 'securityanswer'
     };

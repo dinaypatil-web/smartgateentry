@@ -1154,6 +1154,18 @@ const MaintenancePage = () => {
         };
     };
 
+    const handleConfirmPayment = async (paymentId) => {
+        if (!confirm('Are you sure you want to mark this bill as paid?')) return;
+
+        try {
+            await confirmPayment(paymentId, currentUser.id);
+            alert('Payment confirmed successfully!');
+        } catch (error) {
+            console.error('Failed to confirm payment:', error);
+            alert(`Failed to confirm payment: ${error.message || 'Please try again.'}`);
+        }
+    };
+
     const handleGenerate = async () => {
         if (!amount || isNaN(amount)) {
             alert('Please enter a valid amount');
@@ -1262,7 +1274,7 @@ const MaintenancePage = () => {
                                                 {payment.status === 'pending' && (
                                                     <button
                                                         className="btn btn-success btn-xs"
-                                                        onClick={() => confirmPayment(payment.id, currentUser.id)}
+                                                        onClick={() => handleConfirmPayment(payment.id)}
                                                     >
                                                         Confirm Payment
                                                     </button>
