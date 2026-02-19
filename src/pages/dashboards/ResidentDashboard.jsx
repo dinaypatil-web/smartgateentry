@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
 import { downloadReceipt } from '../../utils/receiptUtils';
+import { initiatePayment } from '../../utils/paymentApi';
 import MyRoles from '../shared/MyRoles';
 import NoticeForm from '../../components/NoticeForm';
 import InviteForm from '../../components/InviteForm';
@@ -1207,18 +1208,38 @@ const MaintenancePage = () => {
 
     const handlePay = async (paymentId) => {
         setIsPaying(true);
-        // Simulate a small delay for payment processing
-        setTimeout(async () => {
-            try {
-                await processPayment(paymentId);
-                alert('Payment successful! Your maintenance bill has been marked as paid.');
-            } catch (error) {
-                console.error('Payment failed:', error);
-                alert('Payment simulation failed. Please try again.');
-            } finally {
-                setIsPaying(false);
-            }
-        }, 1500);
+        try {
+            const payment = myPayments.find(p => p.id === paymentId);
+
+            // 1. Initiate Razorpay Checkout
+            const result = await initiatePayment({
+                amount: payment.amount,
+                month: payment.month,
+                year: payment.year,
+                societyName: society?.name,
+                userName: currentUser.name,
+                userEmail: currentUser.email,
+                userMobile: currentUser.mobile || currentUser.phone,
+                paymentId: paymentId,
+                residentId: currentUser.id,
+                societyId: currentRole?.societyId || currentRole?.societyid
+            });
+
+            // 2. Update Database with Payment Details
+            await processPayment(paymentId, {
+                gateway: 'razorpay',
+                gatewayPaymentId: result.razorpay_payment_id,
+                gatewaySignature: result.razorpay_signature,
+                paymentMethod: 'digital'
+            });
+
+            alert('Payment successful! Your maintenance bill has been marked as paid.');
+        } catch (error) {
+            console.error('Payment failed:', error);
+            alert(error.message || 'Payment simulation failed. Please try again.');
+        } finally {
+            setIsPaying(false);
+        }
     };
 
     return (

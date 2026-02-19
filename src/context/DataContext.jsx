@@ -533,14 +533,13 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    const processPayment = async (paymentId) => {
-        // In a real app, this would integrate with a payment gateway
-        // For now, we simulate the payment being successful
+    const processPayment = async (paymentId, metadata = {}) => {
+        // Now supports real payment gateway metadata
         try {
             await updateDataItem('payments', paymentId, {
-                status: 'paid', // Or 'processing' if we want admin to approve
+                status: 'paid',
                 paymentDate: new Date().toISOString(),
-                paymentMethod: 'app_simulation'
+                ...metadata
             });
         } catch (error) {
             console.error('DataContext: Error processing payment:', error);
