@@ -811,13 +811,20 @@ export const generateMonthlyBills = async (societyId, month, year, amount, creat
 
         if (resError) throw resError;
 
-        const societyResidents = residents.filter(u =>
-            u.roles && JSON.parse(JSON.stringify(u.roles)).some(r =>
-                r.role === 'resident' &&
-                (r.societyId === societyId || r.societyid === societyId) &&
-                r.status === 'approved'
-            )
-        );
+        const societyResidents = residents.filter(u => {
+            try {
+                // Roles can be an array, or a JSON string if Supabase driver doesn't auto-parse
+                const roles = typeof u.roles === 'string' ? JSON.parse(u.roles) : (u.roles || []);
+                return Array.isArray(roles) && roles.some(r =>
+                    r.role === 'resident' &&
+                    (r.societyId === societyId || r.societyid === societyId) &&
+                    r.status === 'approved'
+                );
+            } catch (e) {
+                console.warn(`Supabase API: Error parsing roles for user ${u.id}:`, e);
+                return false;
+            }
+        });
 
         if (societyResidents.length === 0) return { success: true, count: 0 };
 
@@ -833,6 +840,11 @@ export const generateMonthlyBills = async (societyId, month, year, amount, creat
         if (existError) throw existError;
         const existingResidentIds = new Set(existing.map(p => p.residentid));
 
+        const billAmount = parseFloat(amount);
+        if (isNaN(billAmount)) {
+            throw new Error(`Invalid bill amount: ${amount}`);
+        }
+
         // 3. Create bills for residents who don't have one yet
         const newBills = societyResidents
             .filter(r => !existingResidentIds.has(r.id))
@@ -840,7 +852,7 @@ export const generateMonthlyBills = async (societyId, month, year, amount, creat
                 id: generateId(),
                 residentId: r.id,
                 societyId: societyId,
-                amount: parseFloat(amount),
+                amount: billAmount,
                 month: month,
                 year: year,
                 status: 'pending',
