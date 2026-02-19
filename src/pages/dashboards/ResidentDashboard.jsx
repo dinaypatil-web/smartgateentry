@@ -17,6 +17,7 @@ import {
     Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage, Briefcase, Package, Receipt
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
+import { downloadReceipt } from '../../utils/receiptUtils';
 import MyRoles from '../shared/MyRoles';
 import NoticeForm from '../../components/NoticeForm';
 import InviteForm from '../../components/InviteForm';
@@ -1187,12 +1188,22 @@ const NoticeBoardPage = () => {
 // Maintenance & Payments
 const MaintenancePage = () => {
     const { currentUser } = useAuth();
-    const { payments, processPayment } = useData();
+    const { payments, processPayment, getSocietyById } = useData();
     const [isPaying, setIsPaying] = useState(false);
+    const { currentRole } = useAuth();
 
     const myPayments = payments.filter(p => (p.residentId === currentUser?.id || p.residentid === currentUser?.id));
     const pendingPayment = myPayments.find(p => p.status === 'pending');
     const paymentHistory = myPayments.filter(p => p.status === 'paid').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const society = getSocietyById(currentRole?.societyId || currentRole?.societyid);
+
+    const handleDownloadReceipt = () => {
+        if (!paymentHistory[0]) {
+            alert('No payment history found to download receipt.');
+            return;
+        }
+        downloadReceipt(paymentHistory[0], currentUser, society?.name);
+    };
 
     const handlePay = async (paymentId) => {
         setIsPaying(true);
@@ -1277,7 +1288,10 @@ const MaintenancePage = () => {
                         </div>
                     </div>
                     <div className="mt-8 pt-6 border-t border-glass">
-                        <button className="btn btn-ghost btn-sm w-full gap-2">
+                        <button
+                            className="btn btn-ghost btn-sm w-full gap-2"
+                            onClick={handleDownloadReceipt}
+                        >
                             <FileImage size={16} /> Download Last Receipt
                         </button>
                     </div>
