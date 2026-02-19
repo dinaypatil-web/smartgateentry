@@ -803,13 +803,18 @@ export const getResidentPayments = async (residentId) => {
 };
 
 export const generateMonthlyBills = async (societyId, month, year, amount, createdBy) => {
+    if (!societyId) throw new Error('Society ID is required to generate bills');
     try {
         // 1. Get all approved residents for this society
         const { data: residents, error: resError } = await supabase
             .from(COLLECTIONS.USERS)
             .select('*');
 
-        if (resError) throw resError;
+        if (resError) {
+            console.error('Supabase API: Error fetching residents:', resError);
+            throw new Error(`Error fetching residents: ${resError.message}`);
+        }
+        if (!residents) throw new Error('No residents data returned from server');
 
         const societyResidents = residents.filter(u => {
             try {
@@ -837,8 +842,11 @@ export const generateMonthlyBills = async (societyId, month, year, amount, creat
             .eq('year', year)
             .eq('type', 'maintenance');
 
-        if (existError) throw existError;
-        const existingResidentIds = new Set(existing.map(p => p.residentid));
+        if (existError) {
+            console.error('Supabase API: Error checking existing bills:', existError);
+            throw new Error(`Error checking existing bills: ${existError.message}`);
+        }
+        const existingResidentIds = new Set((existing || []).map(p => p.residentid));
 
         const billAmount = parseFloat(amount);
         if (isNaN(billAmount)) {
@@ -867,7 +875,10 @@ export const generateMonthlyBills = async (societyId, month, year, amount, creat
             .from(COLLECTIONS.PAYMENTS)
             .insert(newBills);
 
-        if (insError) throw insError;
+        if (insError) {
+            console.error('Supabase API: Insert failed:', insError);
+            throw new Error(`Failed to insert bills: ${insError.message}`);
+        }
 
         return { success: true, count: newBills.length };
     } catch (error) {

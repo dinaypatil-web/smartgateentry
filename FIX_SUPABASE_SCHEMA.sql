@@ -148,6 +148,8 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS type text;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS createdat text;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS createdby text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS paymentdate text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS paymentmethod text;
 
 -- 12. SOS ALERTS TABLE
 CREATE TABLE IF NOT EXISTS sos_alerts (id text PRIMARY KEY);

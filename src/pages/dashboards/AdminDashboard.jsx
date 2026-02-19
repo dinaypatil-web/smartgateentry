@@ -1170,7 +1170,7 @@ const MaintenancePage = () => {
             alert(`Successfully generated ${result.count} new bills.`);
         } catch (error) {
             console.error('Failed to generate bills:', error);
-            alert('Failed to generate bills. Please try again.');
+            alert(`Failed to generate bills: ${error.message || 'Please try again.'}`);
         } finally {
             setIsGenerating(false);
         }
