@@ -613,3 +613,56 @@ export const getStaff = () => getItem(STORAGE_KEYS.STAFF) || [];
 export const getPayments = () => getItem(STORAGE_KEYS.PAYMENTS) || [];
 export const getSOSAlerts = () => getItem(STORAGE_KEYS.SOS_ALERTS) || [];
 export const getDocuments = () => getItem(STORAGE_KEYS.DOCUMENTS) || [];
+
+// Maintenance & Payments
+export const generateMonthlyBills = (societyId, month, year, amount, createdBy) => {
+    const users = getUsers();
+    const payments = getData('payments');
+
+    // 1. Find all approved residents in this society
+    const societyResidents = users.filter(u =>
+        u.roles && u.roles.some(r =>
+            r.role === 'resident' &&
+            (r.societyId === societyId || r.societyid === societyId) &&
+            r.status === 'approved'
+        )
+    );
+
+    if (societyResidents.length === 0) return { success: true, count: 0 };
+
+    // 2. Filter out those who already have a bill
+    const existingBills = payments.filter(p =>
+        p.societyid === societyId &&
+        p.month === month &&
+        p.year === year &&
+        p.type === 'maintenance'
+    );
+    const existingResidentIds = new Set(existingBills.map(p => p.residentid));
+
+    const newBills = [];
+    const billAmount = parseFloat(amount);
+
+    societyResidents.forEach(r => {
+        if (!existingResidentIds.has(r.id)) {
+            newBills.push({
+                id: generateId(),
+                residentid: r.id,
+                societyid: societyId,
+                amount: billAmount,
+                month: month,
+                year: year,
+                status: 'pending',
+                type: 'maintenance',
+                createdat: new Date().toISOString(),
+                createdby: createdBy
+            });
+        }
+    });
+
+    if (newBills.length > 0) {
+        const updatedPayments = [...payments, ...newBills];
+        setItem(STORAGE_KEYS.PAYMENTS, updatedPayments);
+    }
+
+    return { success: true, count: newBills.length };
+};

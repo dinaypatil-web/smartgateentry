@@ -207,6 +207,13 @@ export const getBookings = () => getData('bookings');
 export const getStaff = () => getData('staff');
 export const getPayments = () => getData('payments');
 
+export const generateMonthlyBills = async (societyId, month, year, amount, createdBy) => {
+    if (USE_ONLINE_STORAGE) {
+        return await api.generateMonthlyBills(societyId, month, year, amount, createdBy);
+    }
+    return localStorage.generateMonthlyBills(societyId, month, year, amount, createdBy);
+};
+
 // Current user session (always use localStorage for session)
 export const getCurrentUser = () => localStorage.getCurrentUser();
 export const setCurrentUser = (user) => localStorage.setCurrentUser(user);
