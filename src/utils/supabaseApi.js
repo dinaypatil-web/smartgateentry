@@ -26,11 +26,11 @@ export const generateId = () => {
 const toDb = (data) => {
     if (!data) return data;
     const mapped = {};
-    
+
     // Define explicit field mappings to ensure consistency
     const fieldMappings = {
         'createdBy': 'createdby',
-        'societyId': 'societyid', 
+        'societyId': 'societyid',
         'residentId': 'residentid',
         'contactNumber': 'contactnumber',
         'idProof': 'idproof',
@@ -54,7 +54,7 @@ const toDb = (data) => {
         'securityQuestion': 'securityquestion',
         'securityAnswer': 'securityanswer'
     };
-    
+
     Object.keys(data).forEach(key => {
         // Use explicit mapping if available
         if (fieldMappings[key]) {
@@ -64,7 +64,7 @@ const toDb = (data) => {
             mapped[key.toLowerCase()] = data[key];
         }
     });
-    
+
     // Critical validation: Ensure essential visitor fields are not lost
     if (data.residentId && !mapped.residentid) {
         mapped.residentid = data.residentId;
@@ -86,7 +86,7 @@ const toDb = (data) => {
         mapped.comingfrom = data.comingFrom;
         console.warn('Supabase API: Force-mapped comingFrom to comingfrom');
     }
-    
+
     console.log('Supabase API: Field mapping result:', {
         originalKeys: Object.keys(data),
         mappedKeys: Object.keys(mapped),
@@ -411,7 +411,7 @@ export const addVisitor = async (visitorData) => {
         // Enhanced validation for critical fields
         const requiredFields = ['name', 'residentId', 'societyId'];
         const missingFields = requiredFields.filter(field => !visitorData[field]);
-        
+
         if (missingFields.length > 0) {
             throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
         }
@@ -541,7 +541,7 @@ export const addVisitor = async (visitorData) => {
 
         if (error) {
             console.error('Supabase: Database error:', error);
-            
+
             // Provide specific error messages for common issues
             if (error.message.includes('payload too large') || error.message.includes('row size')) {
                 throw new Error('Image too large for database storage. Please use a smaller image.');
@@ -574,21 +574,21 @@ const compressImage = async (dataUrl, quality = 0.7) => {
         img.onload = () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            
+
             // Calculate new dimensions (max 800x600)
             let { width, height } = img;
             const maxWidth = 800;
             const maxHeight = 600;
-            
+
             if (width > maxWidth || height > maxHeight) {
                 const ratio = Math.min(maxWidth / width, maxHeight / height);
                 width *= ratio;
                 height *= ratio;
             }
-            
+
             canvas.width = width;
             canvas.height = height;
-            
+
             ctx.drawImage(img, 0, 0, width, height);
             const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
             resolve(compressedDataUrl);
@@ -769,6 +769,97 @@ export const deleteData = async (collection, id) => {
         return true;
     } catch (error) {
         console.error(`Error deleting from ${collection}:`, error);
+        throw error;
+    }
+};
+
+// ===== PAYMENT OPERATIONS =====
+export const getPayments = async (societyId) => {
+    try {
+        const { data, error } = await supabase
+            .from(COLLECTIONS.PAYMENTS)
+            .select('*')
+            .eq('societyid', societyId);
+        if (error) throw error;
+        return fromDb(data);
+    } catch (error) {
+        console.error('Error getting payments:', error);
+        return [];
+    }
+};
+
+export const getResidentPayments = async (residentId) => {
+    try {
+        const { data, error } = await supabase
+            .from(COLLECTIONS.PAYMENTS)
+            .select('*')
+            .eq('residentid', residentId);
+        if (error) throw error;
+        return fromDb(data);
+    } catch (error) {
+        console.error('Error getting resident payments:', error);
+        return [];
+    }
+};
+
+export const generateMonthlyBills = async (societyId, month, year, amount, createdBy) => {
+    try {
+        // 1. Get all approved residents for this society
+        const { data: residents, error: resError } = await supabase
+            .from(COLLECTIONS.USERS)
+            .select('*');
+
+        if (resError) throw resError;
+
+        const societyResidents = residents.filter(u =>
+            u.roles && JSON.parse(JSON.stringify(u.roles)).some(r =>
+                r.role === 'resident' &&
+                (r.societyId === societyId || r.societyid === societyId) &&
+                r.status === 'approved'
+            )
+        );
+
+        if (societyResidents.length === 0) return { success: true, count: 0 };
+
+        // 2. Check for existing bills to avoid duplicates
+        const { data: existing, error: existError } = await supabase
+            .from(COLLECTIONS.PAYMENTS)
+            .select('residentid')
+            .eq('societyid', societyId)
+            .eq('month', month)
+            .eq('year', year)
+            .eq('type', 'maintenance');
+
+        if (existError) throw existError;
+        const existingResidentIds = new Set(existing.map(p => p.residentid));
+
+        // 3. Create bills for residents who don't have one yet
+        const newBills = societyResidents
+            .filter(r => !existingResidentIds.has(r.id))
+            .map(r => toDb({
+                id: generateId(),
+                residentId: r.id,
+                societyId: societyId,
+                amount: parseFloat(amount),
+                month: month,
+                year: year,
+                status: 'pending',
+                type: 'maintenance',
+                createdAt: new Date().toISOString(),
+                createdBy: createdBy
+            }));
+
+        if (newBills.length === 0) return { success: true, count: 0 };
+
+        const { error: insError } = await supabase
+            .from(COLLECTIONS.PAYMENTS)
+            .insert(newBills);
+
+        if (insError) throw insError;
+
+        return { success: true, count: newBills.length };
+    } catch (error) {
+        console.error('Error generating monthly bills:', error);
         throw error;
     }
 };

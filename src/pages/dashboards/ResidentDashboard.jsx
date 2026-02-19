@@ -14,7 +14,7 @@ import CommunityBoard from '../../components/CommunityBoard';
 import {
     LayoutDashboard, UserCheck, History, Ban,
     Check, X, Unlock, Eye, Phone, MapPin, FileText, Users,
-    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage, Briefcase, Package
+    Ticket, Plus, Calendar, Clock, Share2, Trash2, Megaphone, Car, AlertTriangle, Building2, CheckCircle2, ClipboardList, ShieldAlert, Contact, BookOpen, FileImage, Briefcase, Package, Receipt
 } from 'lucide-react';
 import { formatDateTime, getInitials } from '../../utils/validators';
 import MyRoles from '../shared/MyRoles';
@@ -37,6 +37,7 @@ const sidebarItems = [
             { path: '/docs', label: 'Knowledge Hub', icon: BookOpen },
             { path: '/complaints', label: 'Helpdesk', icon: ClipboardList },
             { path: '/notices', label: 'Notice Board', icon: Megaphone },
+            { path: '/maintenance', label: 'Maintenance', icon: Receipt },
             { path: '/history', label: 'Visit History', icon: History },
             { path: '/blocked', label: 'Blocked Visitors', icon: Ban },
             { path: '/my-roles', label: 'My Roles', icon: Users }
@@ -678,7 +679,8 @@ const ResidentDashboard = () => {
                         <Route path="/docs" element={<KnowledgeHubPage />} />
                         <Route path="/complaints" element={<ComplaintsPage />} />
                         <Route path="/notices" element={<NoticeBoardPage />} />
-                        <Route path="/history" element={<HistoryPage />} />
+                        <Route path="/maintenance" element={<MaintenancePage />} />
+                        <Route path="/history" element={<VisitHistoryPage />} />
                         <Route path="/blocked" element={<BlockedPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
                     </Routes>
@@ -1178,6 +1180,159 @@ const NoticeBoardPage = () => {
         <div>
             <h2 className="mb-6">Society Notice Board</h2>
             <NoticeBoard />
+        </div>
+    );
+};
+
+// Maintenance & Payments
+const MaintenancePage = () => {
+    const { currentUser } = useAuth();
+    const { payments, processPayment } = useData();
+    const [isPaying, setIsPaying] = useState(false);
+
+    const myPayments = payments.filter(p => (p.residentId === currentUser?.id || p.residentid === currentUser?.id));
+    const pendingPayment = myPayments.find(p => p.status === 'pending');
+    const paymentHistory = myPayments.filter(p => p.status === 'paid').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const handlePay = async (paymentId) => {
+        setIsPaying(true);
+        // Simulate a small delay for payment processing
+        setTimeout(async () => {
+            try {
+                await processPayment(paymentId);
+                alert('Payment successful! Your maintenance bill has been marked as paid.');
+            } catch (error) {
+                console.error('Payment failed:', error);
+                alert('Payment simulation failed. Please try again.');
+            } finally {
+                setIsPaying(false);
+            }
+        }, 1500);
+    };
+
+    return (
+        <div className="animate-fadeIn">
+            <h2 className="mb-6">Maintenance & Bill Payments</h2>
+
+            <div className="grid-2 gap-6 mb-8">
+                {/* Current Bill Card */}
+                <div className="card" style={{ borderLeft: '4px solid var(--primary-500)' }}>
+                    <h3 className="font-bold flex items-center gap-2 mb-4">
+                        <Receipt size={20} className="text-primary-500" />
+                        Current Due
+                    </h3>
+                    {pendingPayment ? (
+                        <div className="space-y-4">
+                            <div className="flex-between">
+                                <span className="text-muted">Month:</span>
+                                <span className="font-semibold">{pendingPayment.month} {pendingPayment.year}</span>
+                            </div>
+                            <div className="flex-between">
+                                <span className="text-muted">Amount:</span>
+                                <span className="text-2xl font-bold text-primary-400">₹{pendingPayment.amount}</span>
+                            </div>
+                            <div className="pt-4 mt-4 border-t border-glass">
+                                <button
+                                    className="btn btn-primary btn-lg w-full"
+                                    onClick={() => handlePay(pendingPayment.id)}
+                                    disabled={isPaying}
+                                >
+                                    {isPaying ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="spinner-sm"></div>
+                                            Processing...
+                                        </div>
+                                    ) : (
+                                        'PAY NOW'
+                                    )}
+                                </button>
+                                <p className="text-[10px] text-center text-muted mt-3 uppercase tracking-wider">
+                                    Secured by App Simulation
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="py-8 text-center text-muted">
+                            <CheckCircle2 size={40} className="mx-auto mb-3 text-success-500 opacity-20" />
+                            <p>No pending dues. You're all caught up!</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Quick Info / Stats Card */}
+                <div className="card">
+                    <h3 className="font-bold mb-4">Payment Overview</h3>
+                    <div className="space-y-4">
+                        <div className="flex-between">
+                            <span className="text-sm">Total Paid (This Year)</span>
+                            <span className="font-bold">₹{paymentHistory.length * 2000}</span>
+                        </div>
+                        <div className="flex-between">
+                            <span className="text-sm">Last Payment Date</span>
+                            <span className="text-sm">{paymentHistory[0] ? new Date(paymentHistory[0].updatedAt || paymentHistory[0].paymentDate).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                        <div className="flex-between">
+                            <span className="text-sm">Auto-Receipt Status</span>
+                            <span className="badge badge-success">Enabled</span>
+                        </div>
+                    </div>
+                    <div className="mt-8 pt-6 border-t border-glass">
+                        <button className="btn btn-ghost btn-sm w-full gap-2">
+                            <FileImage size={16} /> Download Last Receipt
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="card">
+                <h3 className="font-bold mb-6">Payment History</h3>
+                {paymentHistory.length === 0 ? (
+                    <EmptyState
+                        icon={History}
+                        title="No History"
+                        description="Once you start paying maintenance bills, your history will appear here."
+                    />
+                ) : (
+                    <div className="table-container">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Amount</th>
+                                    <th>Paid On</th>
+                                    <th>Reference</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paymentHistory.map(payment => (
+                                    <tr key={payment.id}>
+                                        <td className="font-medium">{payment.month} {payment.year}</td>
+                                        <td className="font-bold">₹{payment.amount}</td>
+                                        <td className="text-sm text-muted">{new Date(payment.updatedAt || payment.paymentDate).toLocaleDateString()}</td>
+                                        <td className="text-xs font-mono text-muted">{payment.id}</td>
+                                        <td>
+                                            <span className="badge badge-success">PAID</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .spinner-sm {
+                    width: 18px; height: 18px;
+                    border: 2px solid rgba(255,255,255,0.3);
+                    border-top: 2px solid white;
+                    border-radius: 50%;
+                    animation: spin 0.8s linear infinite;
+                }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            ` }} />
         </div>
     );
 };

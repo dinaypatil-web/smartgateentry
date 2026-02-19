@@ -332,7 +332,7 @@ export const DataProvider = ({ children }) => {
         } else {
             storage.updateVisitor(id, updates);
         }
-        
+
         // Send notification if visitor status changed to approved or rejected
         try {
             if (updates.status === 'approved' || updates.status === 'rejected') {
@@ -348,7 +348,7 @@ export const DataProvider = ({ children }) => {
         } catch (notifError) {
             console.error('Failed to send visitor status notification:', notifError);
         }
-        
+
         await refreshData();
     };
 
@@ -380,14 +380,14 @@ export const DataProvider = ({ children }) => {
         } else {
             storage.addNotice(notice);
         }
-        
+
         // Send WhatsApp notification to all society residents
         try {
             const society = societies.find(s => s.id === notice.societyId);
             const societyResidents = users.filter(u =>
                 u.roles.some(r => r.role === 'resident' && r.societyId === notice.societyId && r.status === 'approved')
             );
-            
+
             if (society && societyResidents.length > 0) {
                 console.log(`Sending notice notification to ${societyResidents.length} residents`);
                 await notificationService.notifyNewNotice(notice, society, societyResidents);
@@ -395,7 +395,7 @@ export const DataProvider = ({ children }) => {
         } catch (notifError) {
             console.error('Failed to send notice notifications:', notifError);
         }
-        
+
         await refreshData();
         return notice;
     };
@@ -505,6 +505,55 @@ export const DataProvider = ({ children }) => {
                 role.role === 'security' && (role.societyId === societyId || role.societyid === societyId) && role.status === 'pending'
             )
         );
+    };
+
+    // Payment operations
+    const generateBills = async (month, year, amount, societyId, adminId) => {
+        try {
+            ensureSocietyActive(societyId);
+            const result = await storageApi.generateMonthlyBills(societyId, month, year, amount, adminId);
+            await refreshData();
+            return result;
+        } catch (error) {
+            console.error('DataContext: Error generating bills:', error);
+            throw error;
+        }
+    };
+
+    const confirmPayment = async (paymentId, adminId) => {
+        try {
+            await updateDataItem('payments', paymentId, {
+                status: 'paid',
+                updatedBy: adminId,
+                updatedAt: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('DataContext: Error confirming payment:', error);
+            throw error;
+        }
+    };
+
+    const processPayment = async (paymentId) => {
+        // In a real app, this would integrate with a payment gateway
+        // For now, we simulate the payment being successful
+        try {
+            await updateDataItem('payments', paymentId, {
+                status: 'paid', // Or 'processing' if we want admin to approve
+                paymentDate: new Date().toISOString(),
+                paymentMethod: 'app_simulation'
+            });
+        } catch (error) {
+            console.error('DataContext: Error processing payment:', error);
+            throw error;
+        }
+    };
+
+    const getPaymentsBySociety = (societyId) => {
+        return payments.filter(p => (p.societyId === societyId || p.societyid === societyId));
+    };
+
+    const getPaymentsByResident = (residentId) => {
+        return payments.filter(p => (p.residentId === residentId || p.residentid === residentId));
     };
 
     // Generic CRUD handlers
@@ -683,6 +732,13 @@ export const DataProvider = ({ children }) => {
         getPendingAdministrators,
         getPendingResidents,
         getPendingSecurity,
+
+        // Maintenance Payments
+        generateBills,
+        confirmPayment,
+        processPayment,
+        getPaymentsBySociety,
+        getPaymentsByResident,
 
         // Refresh
         refreshData

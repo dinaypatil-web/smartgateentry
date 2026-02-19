@@ -13,7 +13,7 @@ import BulkUpload from '../../components/BulkUpload';
 import BackupRestore from '../../components/BackupRestore';
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
-    Plus, Edit, Trash2, Key, Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info, Upload, Database
+    Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info, Upload, Database, Receipt
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import { t } from '../../utils/i18n';
@@ -34,6 +34,7 @@ const sidebarItems = [
             { path: '/complaints', label: 'Resident Complaints', icon: ShieldAlert },
             { path: '/unblock-requests', label: 'Unblock Requests', icon: Unlock },
             { path: '/notices', label: t('notices'), icon: Megaphone },
+            { path: '/maintenance', label: 'Maintenance', icon: Receipt },
             { path: '/analytics', label: t('analytics'), icon: BarChart2 },
             { path: '/integrations', label: 'Integrations', icon: ShieldCheck },
             { path: '/backup', label: 'Backup & Restore', icon: Database },
@@ -884,7 +885,8 @@ const AdminDashboard = () => {
                         <Route path="/complaints" element={<ComplaintsAdminPage />} />
                         <Route path="/unblock-requests" element={<UnblockRequestsPage />} />
                         <Route path="/notices" element={<NoticesPage />} />
-                        <Route path="/analytics" element={<AnalyticsPage />} />
+                        <Route path="/maintenance" element={<MaintenancePage />} />
+                        <Route path="/analytics" element={<DashboardHome />} />
                         <Route path="/integrations" element={<IntegrationsPage />} />
                         <Route path="/backup" element={<BackupPage />} />
                         <Route path="/my-roles" element={<MyRoles />} />
@@ -1121,6 +1123,159 @@ const BackupPage = () => {
     return (
         <div>
             {showBackupModal && <BackupRestore onClose={() => setShowBackupModal(false)} />}
+        </div>
+    );
+};
+
+// Maintenance Management
+const MaintenancePage = () => {
+    const { currentRole, currentUser } = useAuth();
+    const { users, payments, generateBills, confirmPayment } = useData();
+    const [month, setMonth] = useState(new Date().toLocaleString('default', { month: 'long' }));
+    const [year, setYear] = useState(new Date().getFullYear().toString());
+    const [amount, setAmount] = useState('2000');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [filterStatus, setFilterStatus] = useState('all');
+
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+    const societyPayments = payments.filter(p => (p.societyId === roleSocietyId || p.societyid === roleSocietyId));
+
+    const filteredPayments = societyPayments.filter(p => {
+        if (filterStatus === 'all') return true;
+        return p.status === filterStatus;
+    });
+
+    const getResidentInfo = (residentId) => {
+        const resident = users.find(u => u.id === residentId);
+        const role = resident?.roles.find(r => r.societyId === roleSocietyId || r.societyid === roleSocietyId);
+        return {
+            name: resident?.name || 'Unknown',
+            flat: `${role?.block || ''} - ${role?.flatNumber || ''}`
+        };
+    };
+
+    const handleGenerate = async () => {
+        if (!amount || isNaN(amount)) {
+            alert('Please enter a valid amount');
+            return;
+        }
+
+        if (!confirm(`Generate bills of ₹${amount} for ${month} ${year} for all approved residents?`)) {
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const result = await generateBills(month, year, amount, roleSocietyId, currentUser.id);
+            alert(`Successfully generated ${result.count} new bills.`);
+        } catch (error) {
+            console.error('Failed to generate bills:', error);
+            alert('Failed to generate bills. Please try again.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    return (
+        <div className="animate-fadeIn">
+            <div className="flex-between mb-6">
+                <h2>Maintenance Payments</h2>
+                <div className="flex gap-2">
+                    <select className="form-input py-1" value={month} onChange={(e) => setMonth(e.target.value)}>
+                        {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
+                            <option key={m} value={m}>{m}</option>
+                        ))}
+                    </select>
+                    <select className="form-input py-1" value={year} onChange={(e) => setYear(e.target.value)}>
+                        {['2024', '2025', '2026'].map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                    <input
+                        type="number"
+                        className="form-input py-1 w-24"
+                        placeholder="Amount"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                    />
+                    <button
+                        className="btn btn-primary btn-sm"
+                        onClick={handleGenerate}
+                        disabled={isGenerating}
+                    >
+                        {isGenerating ? 'Generating...' : 'Generate Bills'}
+                    </button>
+                </div>
+            </div>
+
+            <div className="card mb-6">
+                <div className="flex-between mb-4">
+                    <h3 className="font-bold">Payment Status</h3>
+                    <div className="tabs" style={{ marginBottom: 0 }}>
+                        {['all', 'pending', 'paid'].map(s => (
+                            <button
+                                key={s}
+                                className={`tab ${filterStatus === s ? 'active' : ''}`}
+                                onClick={() => setFilterStatus(s)}
+                            >
+                                {s.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {filteredPayments.length === 0 ? (
+                    <EmptyState
+                        icon={Receipt}
+                        title="No Records Found"
+                        description="No maintenance records match your filter."
+                    />
+                ) : (
+                    <div className="table-container">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Resident</th>
+                                    <th>Flat</th>
+                                    <th>Period</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredPayments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(payment => {
+                                    const resident = getResidentInfo(payment.residentId);
+                                    return (
+                                        <tr key={payment.id}>
+                                            <td>
+                                                <div className="font-medium">{resident.name}</div>
+                                                <div className="text-xs text-muted">{payment.id}</div>
+                                            </td>
+                                            <td>{resident.flat}</td>
+                                            <td>{payment.month} {payment.year}</td>
+                                            <td className="font-bold">₹{payment.amount}</td>
+                                            <td>
+                                                <StatusBadge status={payment.status} />
+                                            </td>
+                                            <td>
+                                                {payment.status === 'pending' && (
+                                                    <button
+                                                        className="btn btn-success btn-xs"
+                                                        onClick={() => confirmPayment(payment.id, currentUser.id)}
+                                                    >
+                                                        Confirm Payment
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
