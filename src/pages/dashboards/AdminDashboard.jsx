@@ -1038,7 +1038,7 @@ const AnalyticsPage = () => {
 // Integrations & Smart Hub (Simulated)
 const IntegrationsPage = () => {
     const integrations = [
-        { id: 'whatsapp', name: 'WhatsApp Alerts', icon: Mail, status: 'active', desc: 'Real-time notifications for SOS and visitors.' },
+        { id: 'whatsapp', name: 'WhatsApp Alerts', icon: Mail, status: 'inactive', desc: 'Real-time notifications (Requires API activation).' },
         { id: 'boom', name: 'Boom Barrier', icon: ShieldCheck, status: 'simulated', desc: 'Automated gate control for verified residents.' },
         { id: 'cctv', name: 'Smart CCTV', icon: Eye, status: 'inactive', desc: 'AI recognition for suspicious activities.' },
         { id: 'sms', name: 'SMS Gateway', icon: Mail, status: 'active', desc: 'Fallback notifications for low-data areas.' }
