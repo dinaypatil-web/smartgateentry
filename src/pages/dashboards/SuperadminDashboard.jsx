@@ -16,16 +16,17 @@ import {
 } from 'lucide-react';
 import { formatDate, getRoleLabel } from '../../utils/validators';
 import * as storageUtils from '../../utils/storage';
+import { t } from '../../utils/i18n';
 
 const sidebarItems = [
     {
         title: 'Main',
         items: [
-            { path: '', label: 'Dashboard', icon: LayoutDashboard },
-            { path: '/societies', label: 'Societies', icon: Building2 },
-            { path: '/administrators', label: 'Administrators', icon: Users },
-            { path: '/my-roles', label: 'My Roles', icon: UserCheck },
-            { path: '/backup', label: 'Backup & Restore', icon: Database }
+            { path: '', label: t('dashboard'), icon: LayoutDashboard },
+            { path: '/societies', label: t('societies'), icon: Building2 },
+            { path: '/administrators', label: t('administrators'), icon: Users },
+            { path: '/my-roles', label: t('my_roles'), icon: UserCheck },
+            { path: '/backup', label: t('backup'), icon: Database }
         ]
     }
 ];
@@ -54,7 +55,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{societies.length}</div>
-                        <div className="stat-label">Total Societies</div>
+                        <div className="stat-label">{t('societies')}</div>
                     </div>
                 </div>
 

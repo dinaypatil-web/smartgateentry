@@ -25,21 +25,21 @@ const sidebarItems = [
     {
         title: 'Main',
         items: [
-            { path: '', label: 'Dashboard', icon: LayoutDashboard },
-            { path: '/residents', label: 'Residents', icon: Users },
-            { path: '/security', label: 'Security Personnel', icon: Shield },
-            { path: '/amenities', label: 'Manage Amenities', icon: Building2 },
-            { path: '/staff', label: 'Staff Management', icon: Contact },
-            { path: '/docs', label: 'Society Documents', icon: BookOpen },
-            { path: '/visitor-log', label: 'Visitor Log', icon: ClipboardList },
-            { path: '/complaints', label: 'Resident Complaints', icon: ShieldAlert },
-            { path: '/unblock-requests', label: 'Unblock Requests', icon: Unlock },
+            { path: '', label: t('dashboard'), icon: LayoutDashboard },
+            { path: '/residents', label: t('residents'), icon: Users },
+            { path: '/security', label: t('security'), icon: Shield },
+            { path: '/amenities', label: t('manage_amenities'), icon: Building2 },
+            { path: '/staff', label: t('staff'), icon: Contact },
+            { path: '/docs', label: t('society_docs'), icon: BookOpen },
+            { path: '/visitor-log', label: t('visitor_log'), icon: ClipboardList },
+            { path: '/complaints', label: t('resident_complaints'), icon: ShieldAlert },
+            { path: '/unblock-requests', label: t('unblock_requests'), icon: Unlock },
             { path: '/notices', label: t('notices'), icon: Megaphone },
-            { path: '/maintenance', label: 'Maintenance', icon: Receipt },
+            { path: '/maintenance', label: t('maintenance'), icon: Receipt },
             { path: '/analytics', label: t('analytics'), icon: BarChart2 },
-            { path: '/integrations', label: 'Integrations', icon: ShieldCheck },
-            { path: '/backup', label: 'Backup & Restore', icon: Database },
-            { path: '/my-roles', label: 'My Roles', icon: Users }
+            { path: '/integrations', label: t('integrations'), icon: ShieldCheck },
+            { path: '/backup', label: t('backup'), icon: Database },
+            { path: '/my-roles', label: t('my_roles'), icon: Users }
         ]
     }
 ];

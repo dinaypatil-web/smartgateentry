@@ -85,6 +85,7 @@ const Header = ({ title }) => {
                                 <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'en'); window.location.reload(); }}>English</button>
                                 <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'hi'); window.location.reload(); }}>हिंदी (Hindi)</button>
                                 <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'mr'); window.location.reload(); }}>मराठी (Marathi)</button>
+                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'gu'); window.location.reload(); }}>ગુજરાતી (Gujarati)</button>
                             </div>
                         </>
                     )}
