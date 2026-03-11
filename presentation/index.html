@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartGate Entry - App Presentation</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --bg-dark: #0f0f23;
+            --bg-card: #1a1a2e;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --success: #10b981;
+            --error: #ef4444;
+            --accent: #a5b4fc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 40px 80px;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1a2e 100%);
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        p,
+        li {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+        }
+
+        ul {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .content-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            height: 100%;
+        }
+
+        /* Phone Mockup Styling */
+        .phone-container {
+            width: 320px;
+            height: 640px;
+            background: #000;
+            border: 12px solid #222;
+            border-radius: 40px;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.2);
+            overflow: hidden;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .phone-header {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .phone-title {
+            font-weight: bold;
+            color: var(--text-main);
+            font-size: 16px;
+        }
+
+        /* App UI Components for Mockups */
+        .mock-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .mock-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .mock-input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            color: #fff;
+            width: 100%;
+        }
+
+        .mock-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .badge-approved {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .camera-preview {
+            background: #333;
+            height: 180px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            border: 2px dashed #444;
+        }
+
+        .pass-code {
+            font-family: monospace;
+            font-size: 24px;
+            letter-spacing: 4px;
+            text-align: center;
+            color: var(--primary);
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        /* Navigation Controls */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid var(--primary);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+        }
+
+        .slide-indicator {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            color: var(--text-muted);
+        }
+
+        /* Flow Diagram styling */
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .flow-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .flow-num {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="controls">
+        <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+    <div class="slide-indicator" id="prog">1 / 15</div>
+
+    <!-- Slide 1: Welcome -->
+    <div class="slide active">
+        <div class="content-layout">
+            <div>
+                <h1>SmartGate Entry</h1>
+                <p style="font-size: 1.5rem;">Intelligent Society Visitor Management System</p>
+                <p>Digitalizing society gates with real-time approvals, photo tracking, and seamless operation flow for
+                    modern residential communities.</p>
+            </div>
+            <div class="phone-container">
+                <div class="phone-screen">
+                    <div
+                        style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <div
+                            style="width: 80px; height: 80px; background: var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 0 20px var(--primary);">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </div>
+                        <h2 style="color: white; margin-bottom: 5px;">GateEntry</h2>
+                        <p style="font-size: 0.9rem;">Modern Society Security</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: Multi-Role System -->
+    <div class="slide">
+        <h2>Multi-Role Ecosystem</h2>
+        <div class="content-layout">
+            <div>
+                <p>One application serving four distinct stakeholders with specialized dashboards:</p>
+                <ul style="margin-top: 1rem;">
+                    <li><strong>Residents:</strong> Approve visitors, manage invites, pay bills.</li>
+                    <li><strong>Security:</strong> Digital gate log, photo capture, pass verification.</li>
+                    <li><strong>Administrators:</strong> Manage society data, staff, and reports.</li>
+                    <li><strong>Superadmin:</strong> Global oversight and infrastructure management.</li>
+                </ul>
+            </div>
+            <div class="phone-container">
+                <div class="phone-screen">
+                    <div class="phone-header"><span class="phone-title">Choose Role</span></div>
+                    <div class="mock-card" style="border-color: var(--primary);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div
+                                style="width: 32px; height: 32px; background: rgba(99,102,241,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                👤</div>
+                            <div>
+                                <strong>Resident</strong>
+                                <div style="font-size: 10px; color: var(--text-muted);">Flat 402, Block A</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mock-card">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div
+                                style="width: 32px; height: 32px; background: rgba(139,92,246,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                🛡️</div>
+                            <div>
+                                <strong>Security</strong>
+                                <div style="font-size: 10px; color: var(--text-muted);">Main Entrance Gate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Visitor Registration Process -->
+    <div class="slide">
+        <h2>Process: Visitor Arrival</h2>
+        <div class="content-layout">
+            <div>
+                <h3>Step 1: Security Registration</h3>
+                <p>When a visitor arrives at the gate, the security guard records their details instantly.</p>
+                <ul>
+                    <li>Mandatory photo capture for security.</li>
+                    <li>Visitor details (Name, Purpose, Contact).</li>
+                    <li>Resident selection for visit destination.</li>
+                    <li>Real-time sync to resident's device.</li>
+                </ul>
+            </div>
+            <div class="phone-container">
+                <div class="phone-screen">
+                    <div class="phone-header"><span class="phone-title">New Entry</span></div>
+                    <div class="camera-preview">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                            </path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="mock-input" style="font-size: 12px;">Name: John Wilson</div>
+                    <div class="mock-input" style="font-size: 12px;">Visiting: Flat 104</div>
+                    <button class="mock-btn">Send Approval Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Real-time Resident Approval -->
+    <div class="slide">
+        <h2>Process: Resident Approval</h2>
+        <div class="content-layout">
+            <div>
+                <h3>Step 2: Resident Decision</h3>
+                <p>Residents receive an instant notification on their dashboard about the visitor waiting at the gate.
+                </p>
+                <ul>
+                    <li>View visitor photo and details remotely.</li>
+                    <li>One-tap <strong>Approve</strong> or <strong>Reject</strong>.</li>
+                    <li>Instant feedback to the security gate.</li>
+                    <li>Eliminates intercom dependency.</li>
+                </ul>
+            </div>
+            <div class="phone-container">
+                <div class="phone-screen">
+                    <div class="phone-header"><span class="phone-title">Pending Visitors</span></div>
+                    <div class="mock-card" style="border-left: 4px solid #f59e0b;">
+                        <span class="mock-badge badge-pending">Waiting at Gate</span>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="width: 50px; height: 50px; background: #444; border-radius: 8px;"></div>
+                            <div>
+                                <strong>John Wilson</strong>
+                                <div style="font-size: 11px; color: var(--text-muted);">Purpose: Delivery</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="mock-btn" style="background:#10b981; margin-top:0;">Approve</button>
+                            <button class="mock-btn" style="background:#ef4444; margin-top:0;">Reject</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Pre-Approval / Invites -->
+    <div class="slide">
+        <h2>Feature: Pre-Approved Invites</h2>
+        <div class="content-layout">
+            <div>
+                <h3>Seamless Entry for Guests</h3>
+                <p>Residents can generate digital passes for their expected guests or vendors.</p>
+                <ul>
+                    <li>Generate 6-digit pass code in advance.</li>
+                    <li>Share via WhatsApp or SMS.</li>
+                    <li>Security simply enters code for "Fast Lane" check-in.</li>
+                    <li>Reduces gate congestion during events.</li>
+                </ul>
+            </div>
+            <div class="phone-container">
+                <div class="phone-screen">
+                    <div class="phone-header"><span class="phone-title">Visitor Pass</span></div>
+                    <div class="mock-card"
+                        style="text-align: center; background: linear-gradient(135deg, #1a1a2e, #16213e);">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                            stroke-width="2" style="margin-bottom: 10px;">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <div style="color: var(--text-muted); font-size: 12px;">Your Guest Pass Code</div>
+                        <div class="pass-code">583 291</div>
+                        <div style="font-size: 12px; font-weight: bold;">Guest: Mark Davidson</div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 5px;">Valid for: Today, 22
+                            Feb</div>
+                        <button class="mock-btn" style="background: #25d366;">Share on WhatsApp</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Digital Gate Log -->
+    <div class="slide">
+        <h2>Feature: Digital Gate Logs</h2>
+        <div class="content-layout">
+            <div>
+                <p>Security personnel have a clear, filterable view of all activity.</p>
+                <ul>
+                    <li><strong>Inside:</strong> List of all visitors currently in society.</li>
+                    <li><strong>Checkout:</strong> Digital exit logging with one click.</li>
+                    <li><strong>History:</strong> Full searchable history of every entry.</li>
+                    <li><strong>Verification:</strong> Instant vehicle lookup by number.</li>
+                </ul>
+            </div>
+            <div class="phone-container">
+                <div class="phone-screen">
+                    <div class="phone-header"><span class="phone-title">Current Visitors</span></div>
+                    <div class="mock-card">
+                        <span class="mock-badge badge-approved">Checked In</span>
+                        <div><strong>Sarah Parker</strong></div>
+                        <div style="font-size: 10px; color: var(--text-muted);">In at: 10:30 AM | Flat 502</div>
+                        <button class="mock-btn" style="background: #444; font-size: 12px;">Mark Exit</button>
+                    </div>
+                    <div class="mock-card">
+                        <span class="mock-badge badge-approved">Checked In</span>
+                        <div><strong>Mike Ross</strong></div>
+                        <div style="font-size: 10px; color: var(--text-muted);">In at: 11:15 AM | Flat 12B</div>
+                        <button class="mock-btn" style="background: #444; font-size: 12px;">Mark Exit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Integrated Operations -->
+    <div class="slide">
+        <h2>Integrated Society Operations</h2>
+        <div class="content-layout">
+            <div>
+                <p>Beyond visitor management, GateEntry handles daily society essentials:</p>
+                <ul>
+                    <li><strong>Notice Board:</strong> Instant digital announcements.</li>
+                    <li><strong>Bills & Payments:</strong> Maintenance bill generation and digital payments.</li>
+                    <li><strong>SOS Button:</strong> Emergency alerts to security and neighbors.</li>
+                    <li><strong>Helpdesk:</strong> Complaint tracking for residents.</li>
+                </ul>
+            </div>
+            <div class="phone-container">
+                <div class="phone-screen">
+                    <div class="phone-header"><span class="phone-title">Dashboard</span></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div class="mock-card" style="text-align: center; margin: 0; padding: 10px;">
+                            <div style="font-size: 20px;">📢</div>
+                            <div style="font-size: 10px;">Notices</div>
+                        </div>
+                        <div class="mock-card" style="text-align: center; margin: 0; padding: 10px;">
+                            <div style="font-size: 20px;">💳</div>
+                            <div style="font-size: 10px;">Payments</div>
+                        </div>
+                    </div>
+                    <div class="mock-card"
+                        style="background: rgba(239, 68, 68, 0.1); border-color: var(--error); text-align: center;">
+                        <div style="font-size: 24px;">🚨</div>
+                        <div style="color: var(--error); font-weight: bold;">SOS Emergency</div>
+                    </div>
+                    <div class="mock-card" style="margin-top: auto;">
+                        <div style="font-weight: bold; font-size: 12px; margin-bottom: 5px;">Latest Notice</div>
+                        <div style="font-size: 10px; color: var(--text-muted);">Lift maintenance scheduled for Tower A
+                            tomorrow...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Operation Flow (Visual) -->
+    <div class="slide">
+        <h2>Operation Flow: Summary</h2>
+        <div style="max-width: 800px; margin: 0 auto; width: 100%;">
+            <div class="flow-container">
+                <div class="flow-item">
+                    <div class="flow-num">1</div>
+                    <div>
+                        <strong>Arrival:</strong> Visitor arrives; Security captures photo & details.
+                    </div>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-num">2</div>
+                    <div>
+                        <strong>Notification:</strong> Resident receives real-time approval request on app.
+                    </div>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-num">3</div>
+                    <div>
+                        <strong>Action:</strong> Resident approves after verifying identity via photo.
+                    </div>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-num">4</div>
+                    <div>
+                        <strong>Entry:</strong> Security gate opens; Digital log remains for history.
+                    </div>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-num">5</div>
+                    <div>
+                        <strong>Exit:</strong> Visitor leaves; Security marks exit to clear the log.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Technical Stack -->
+    <div class="slide">
+        <h2>Technical Foundation</h2>
+        <div class="content-layout">
+            <div>
+                <ul>
+                    <li><strong>Modern UI:</strong> Built with React + Vite for lightning-fast performance.</li>
+                    <li><strong>Real-time Sync:</strong> Cloud database (Supabase/Firebase) ensures gate & resident
+                        sync.</li>
+                    <li><strong>Offline Resilience:</strong> LocalStorage fallback keeps gates operational.</li>
+                    <li><strong>Secure:</strong> Multi-tier authentication and role-based access.</li>
+                </ul>
+            </div>
+            <div style="background: rgba(255,255,255,0.05); padding: 40px; border-radius: 24px; text-align: center;">
+                <h3 style="margin-bottom: 20px;">Built For Reliability</h3>
+                <code style="color: var(--accent); white-space: pre-wrap; text-align: left; display: block;">
+{
+  "safety": "high",
+  "realtime": true,
+  "scalability": "unlimited",
+  "security": "RBAC"
+}
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Conclusion -->
+    <div class="slide">
+        <div style="text-align: center; max-width: 800px; margin: 0 auto;">
+            <h1>SmartGate Entry</h1>
+            <p style="font-size: 1.5rem; margin: 2rem 0;">Empowering Security, Enhancing Comfort.</p>
+            <div style="display: flex; gap: 20px; justify-content: center; margin-top: 3rem;">
+                <div class="mock-card" style="width: 200px;">
+                    <h3 style="font-size: 2rem; margin-bottom: 0px;">100%</h3>
+                    <div style="font-size: 0.8rem;">Digital Logs</div>
+                </div>
+                <div class="mock-card" style="width: 200px;">
+                    <h3 style="font-size: 2rem; margin-bottom: 0px;">Real-time</h3>
+                    <div style="font-size: 0.8rem;">Approvals</div>
+                </div>
+                <div class="mock-card" style="width: 200px;">
+                    <h3 style="font-size: 2rem; margin-bottom: 0px;">Secure</h3>
+                    <div style="font-size: 0.8rem;">Societies</div>
+                </div>
+            </div>
+            <p style="margin-top: 4rem;">Thank you for your time!</p>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const indicator = document.getElementById('prog');
+
+        function updateSlide() {
+            slides.forEach((s, i) => {
+                s.classList.toggle('active', i === currentSlide);
+            });
+            indicator.innerText = `${currentSlide + 1} / ${slides.length}`;
+            window.location.hash = (currentSlide + 1);
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Handle URL hash for deep linking
+        if (window.location.hash) {
+            const h = parseInt(window.location.hash.substring(1));
+            if (!isNaN(h) && h >= 1 && h <= slides.length) {
+                currentSlide = h - 1;
+                updateSlide();
+            }
+        }
+    </script>
+</body>
+
+</html>

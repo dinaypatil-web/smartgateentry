@@ -13,7 +13,8 @@ import BulkUpload from '../../components/BulkUpload';
 import BackupRestore from '../../components/BackupRestore';
 import {
     LayoutDashboard, Users, UserPlus, Shield, Eye, EyeOff,
-    Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info, Upload, Database, Receipt
+    Check, X, UserX, ClipboardList, UserCheck, Unlock, Megaphone, ShieldAlert, CheckCircle2, Clock, Building2, Contact, BookOpen, BarChart2, TrendingUp, PieChart, ShieldCheck, Mail, Info, Upload, Database, Receipt,
+    Plus, Trash2, Key
 } from 'lucide-react';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import { t } from '../../utils/i18n';
@@ -858,44 +859,6 @@ const VisitorLogPage = () => {
     );
 };
 
-// Main Dashboard Layout
-const AdminDashboard = () => {
-    const { currentRole } = useAuth();
-    const { isSocietyActive, getSocietyById, loading } = useData();
-
-    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
-    const isActive = isSocietyActive(roleSocietyId);
-    const society = getSocietyById(roleSocietyId);
-
-    return (
-        <div className="app-container">
-            {!loading && !isActive && <InactiveSocietyOverlay societyName={society?.name} />}
-            <Sidebar items={sidebarItems} basePath="/admin" />
-            <div className="main-content">
-                <Header title="Administrator Dashboard" />
-                <div className="page-content">
-                    <Routes>
-                        <Route path="/" element={<DashboardHome />} />
-                        <Route path="/residents" element={<ResidentsPage />} />
-                        <Route path="/security" element={<SecurityPage />} />
-                        <Route path="/amenities" element={<AmenitiesAdminPage />} />
-                        <Route path="/staff" element={<StaffAdminPage />} />
-                        <Route path="/docs" element={<DocumentsAdminPage />} />
-                        <Route path="/visitor-log" element={<VisitorLogPage />} />
-                        <Route path="/complaints" element={<ComplaintsAdminPage />} />
-                        <Route path="/unblock-requests" element={<UnblockRequestsPage />} />
-                        <Route path="/notices" element={<NoticesPage />} />
-                        <Route path="/maintenance" element={<MaintenancePage />} />
-                        <Route path="/analytics" element={<AnalyticsPage />} />
-                        <Route path="/integrations" element={<IntegrationsPage />} />
-                        <Route path="/backup" element={<BackupPage />} />
-                        <Route path="/my-roles" element={<MyRoles />} />
-                    </Routes>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // Notices Management for Admin
 const NoticesPage = () => {
@@ -951,7 +914,8 @@ const NoticesPage = () => {
 
 // Analytics & Reports
 const AnalyticsPage = () => {
-    const { visitors, complaints, amenities, bookings, currentRole } = useData();
+    const { currentRole } = useAuth();
+    const { visitors, complaints, amenities, bookings } = useData();
     const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
 
     // Filter data for this society
@@ -1695,6 +1659,45 @@ const ComplaintsAdminPage = () => {
                 .complaint-card.urgent { border-left: 4px solid var(--error-500); }
                 .urgent-tag { background: var(--error-600); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; }
             ` }} />
+        </div>
+    );
+};
+
+// Main Dashboard Layout
+const AdminDashboard = () => {
+    const { currentRole } = useAuth();
+    const { isSocietyActive, getSocietyById, loading } = useData();
+
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+    const isActive = isSocietyActive(roleSocietyId);
+    const society = getSocietyById(roleSocietyId);
+
+    return (
+        <div className="app-container">
+            {!loading && !isActive && <InactiveSocietyOverlay societyName={society?.name} />}
+            <Sidebar items={sidebarItems} basePath="/admin" />
+            <div className="main-content">
+                <Header title="Administrator Dashboard" />
+                <div className="page-content">
+                    <Routes>
+                        <Route path="/" element={<DashboardHome />} />
+                        <Route path="/residents" element={<ResidentsPage />} />
+                        <Route path="/security" element={<SecurityPage />} />
+                        <Route path="/amenities" element={<AmenitiesAdminPage />} />
+                        <Route path="/staff" element={<StaffAdminPage />} />
+                        <Route path="/docs" element={<DocumentsAdminPage />} />
+                        <Route path="/visitor-log" element={<VisitorLogPage />} />
+                        <Route path="/complaints" element={<ComplaintsAdminPage />} />
+                        <Route path="/unblock-requests" element={<UnblockRequestsPage />} />
+                        <Route path="/notices" element={<NoticesPage />} />
+                        <Route path="/maintenance" element={<MaintenancePage />} />
+                        <Route path="/analytics" element={<AnalyticsPage />} />
+                        <Route path="/integrations" element={<IntegrationsPage />} />
+                        <Route path="/backup" element={<BackupPage />} />
+                        <Route path="/my-roles" element={<MyRoles />} />
+                    </Routes>
+                </div>
+            </div>
         </div>
     );
 };
