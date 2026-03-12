@@ -1508,6 +1508,7 @@ const AmenitiesPage = () => {
     const [selectedAmenity, setSelectedAmenity] = useState(null);
     const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedSlot, setSelectedSlot] = useState('');
+    const [activeTab, setActiveTab] = useState('available'); // 'available' or 'bookings'
 
     const slots = [
         "06:00 - 08:00", "08:00 - 10:00", "10:00 - 12:00",
@@ -1530,6 +1531,12 @@ const AmenitiesPage = () => {
         });
         setSelectedAmenity(null);
         setSelectedSlot('');
+        setActiveTab('bookings'); // Switch to bookings page after successful booking
+    };
+
+    const getAmenityName = (id) => {
+        const amenity = societyAmenities.find(a => a.id === id);
+        return amenity ? amenity.name : 'Unknown Amenity';
     };
 
     return (
@@ -1542,32 +1549,91 @@ const AmenitiesPage = () => {
             </div>
 
             <div className="tabs mb-8">
-                <button className="tab active">Available Amenities</button>
-                <button className="tab">My Bookings ({myBookings.length})</button>
+                <button 
+                    className={`tab ${activeTab === 'available' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('available')}
+                >
+                    Available Amenities
+                </button>
+                <button 
+                    className={`tab ${activeTab === 'bookings' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('bookings')}
+                >
+                    My Bookings ({myBookings.length})
+                </button>
             </div>
 
-            {societyAmenities.length === 0 ? (
-                <EmptyState icon={Building2} title="No Amenities Listed" description="The society hasn't listed any amenities yet." />
-            ) : (
-                <div className="grid-3">
-                    {societyAmenities.map(amenity => (
-                        <div key={amenity.id} className="card amenity-card animate-slideUp">
-                            <div className="amenity-image-placeholder">
-                                <Building2 size={48} />
-                            </div>
-                            <div className="p-5">
-                                <h3 className="text-xl font-bold mb-2">{amenity.name}</h3>
-                                <p className="text-sm text-muted mb-4 line-clamp-2">{amenity.description}</p>
-                                <div className="flex-between text-xs font-semibold uppercase tracking-wider text-primary-400 mb-4">
-                                    <span>Capacity: {amenity.capacity}</span>
-                                    <span>Rules: {amenity.rules ? 'View' : 'None'}</span>
+            {activeTab === 'available' ? (
+                societyAmenities.length === 0 ? (
+                    <EmptyState icon={Building2} title="No Amenities Listed" description="The society hasn't listed any amenities yet." />
+                ) : (
+                    <div className="grid-3">
+                        {societyAmenities.map(amenity => (
+                            <div key={amenity.id} className="card amenity-card animate-slideUp">
+                                <div className="amenity-image-placeholder">
+                                    <Building2 size={48} />
                                 </div>
-                                <button className="btn btn-primary w-full" onClick={() => setSelectedAmenity(amenity)}>
-                                    Book Now
-                                </button>
+                                <div className="p-5">
+                                    <h3 className="text-xl font-bold mb-2">{amenity.name}</h3>
+                                    <p className="text-sm text-muted mb-4 line-clamp-2">{amenity.description}</p>
+                                    <div className="flex-between text-xs font-semibold uppercase tracking-wider text-primary-400 mb-4">
+                                        <span>Capacity: {amenity.capacity}</span>
+                                        <span>Rules: {amenity.rules ? 'View' : 'None'}</span>
+                                    </div>
+                                    <button className="btn btn-primary w-full" onClick={() => setSelectedAmenity(amenity)}>
+                                        Book Now
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )
+            ) : (
+                <div className="animate-fadeIn">
+                    {myBookings.length === 0 ? (
+                        <EmptyState 
+                            icon={ClipboardList} 
+                            title="No Bookings Yet" 
+                            description="You haven't booked any amenities yet. Switch to the 'Available Amenities' tab to make a booking." 
+                        />
+                    ) : (
+                        <div className="card">
+                            <div className="table-container">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Amenity</th>
+                                            <th>Date</th>
+                                            <th>Time Slot</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {myBookings.sort((a, b) => new Date(b.date) - new Date(a.date)).map(booking => (
+                                            <tr key={booking.id}>
+                                                <td className="font-bold">{getAmenityName(booking.amenityId)}</td>
+                                                <td>{new Date(booking.date).toLocaleDateString()}</td>
+                                                <td className="text-sm">{booking.slot}</td>
+                                                <td>
+                                                    <StatusBadge status={booking.status} />
+                                                </td>
+                                                <td>
+                                                    <button 
+                                                        className="btn btn-ghost btn-sm text-error-500"
+                                                        onClick={() => deleteDataItem('bookings', booking.id)}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                        Cancel
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
 
