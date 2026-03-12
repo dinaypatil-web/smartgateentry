@@ -458,8 +458,8 @@ const ResidentsPage = () => {
                                                 <div>{resident.email}</div>
                                                 <div className="text-muted">{resident.mobile}</div>
                                             </td>
-                                            <td>{role?.block || '—'}</td>
-                                            <td>{role?.flatNumber || '—'}</td>
+                                            <td>{role?.block || role?.blockName || '—'}</td>
+                                            <td>{role?.flatNumber || role?.flatnumber || role?.flatNo || '—'}</td>
                                             <td>
                                                 <StatusBadge status={role?.status} />
                                             </td>
@@ -1111,10 +1111,28 @@ const MaintenancePage = () => {
 
     const getResidentInfo = (residentId) => {
         const resident = users.find(u => u.id === residentId);
-        const role = resident?.roles.find(r => r.societyId === roleSocietyId || r.societyid === roleSocietyId);
-        return {
-            name: resident?.name || 'Unknown',
-            flat: `${role?.block || ''} - ${role?.flatNumber || ''}`
+        if (!resident) return { name: 'Unknown', flat: 'N/A' };
+        
+        // Find the resident role for this society specifically, as it contains flat info
+        let role = resident.roles?.find(r => 
+            (r.societyId === roleSocietyId || r.societyid === roleSocietyId) && 
+            r.role === 'resident'
+        );
+        
+        // Fallback to any role in this society if resident role not found
+        if (!role) {
+            role = resident.roles?.find(r => (r.societyId === roleSocietyId || r.societyid === roleSocietyId));
+        }
+        
+        const block = role?.block || role?.blockName || '';
+        let flat = role?.flatNumber || role?.flatnumber || role?.flatNo || '';
+        
+        // Handle cases where flat might be just a hyphen
+        if (flat === '-' || flat === '—') flat = '';
+        
+        return { 
+            name: resident.name, 
+            flat: (block || flat) ? `${block}${block && flat ? '-' : ''}${flat}` : 'N/A' 
         };
     };
 
@@ -1485,10 +1503,27 @@ const AmenitiesAdminPage = () => {
     const getResidentInfo = (residentId) => {
         const resident = users.find(u => u.id === residentId);
         if (!resident) return { name: 'Unknown', flat: 'N/A' };
-        const role = resident.roles?.find(r => (r.societyId === roleSocietyId || r.societyid === roleSocietyId));
+        
+        // Find the resident role for this society specifically, as it contains flat info
+        let role = resident.roles?.find(r => 
+            (r.societyId === roleSocietyId || r.societyid === roleSocietyId) && 
+            r.role === 'resident'
+        );
+        
+        // Fallback to any role in this society if resident role not found
+        if (!role) {
+            role = resident.roles?.find(r => (r.societyId === roleSocietyId || r.societyid === roleSocietyId));
+        }
+        
+        const block = role?.block || role?.blockName || '';
+        let flat = role?.flatNumber || role?.flatnumber || role?.flatNo || '';
+        
+        // Handle cases where flat might be just a hyphen
+        if (flat === '-' || flat === '—') flat = '';
+        
         return { 
             name: resident.name, 
-            flat: role ? `${role.block || ''}-${role.flatNumber || ''}` : 'N/A' 
+            flat: (block || flat) ? `${block}${block && flat ? '-' : ''}${flat}` : 'N/A' 
         };
     };
 
@@ -1678,8 +1713,27 @@ const ComplaintsAdminPage = () => {
     const getResidentInfo = (residentId) => {
         const resident = users.find(u => u.id === residentId);
         if (!resident) return { name: 'Unknown', flat: 'N/A' };
-        const role = resident.roles.find(r => r.role === 'resident' && r.societyId === currentRole.societyId);
-        return { name: resident.name, flat: `${role?.block || ''}-${role?.flatNumber || ''}` };
+        
+        // Find the resident role for this society specifically, as it contains flat info
+        let role = resident.roles?.find(r => 
+            (r.role === 'resident' && (r.societyId === currentRole.societyId || r.societyid === currentRole.societyId))
+        );
+        
+        // Fallback to any role in this society if resident role not found
+        if (!role) {
+            role = resident.roles?.find(r => (r.societyId === currentRole.societyId || r.societyid === currentRole.societyId));
+        }
+        
+        const block = role?.block || role?.blockName || '';
+        let flat = role?.flatNumber || role?.flatnumber || role?.flatNo || '';
+        
+        // Handle cases where flat might be just a hyphen
+        if (flat === '-' || flat === '—') flat = '';
+        
+        return { 
+            name: resident.name, 
+            flat: (block || flat) ? `${block}${block && flat ? '-' : ''}${flat}` : 'N/A' 
+        };
     };
 
     const handleUpdateStatus = async (id, status) => {
