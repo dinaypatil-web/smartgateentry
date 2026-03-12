@@ -21,28 +21,7 @@ import { t } from '../../utils/i18n';
 import MyRoles from '../shared/MyRoles';
 import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
 
-const sidebarItems = [
-    {
-        title: 'Main',
-        items: [
-            { path: '', label: t('dashboard'), icon: LayoutDashboard },
-            { path: '/residents', label: t('residents'), icon: Users },
-            { path: '/security', label: t('security'), icon: Shield },
-            { path: '/amenities', label: t('manage_amenities'), icon: Building2 },
-            { path: '/staff', label: t('staff'), icon: Contact },
-            { path: '/docs', label: t('society_docs'), icon: BookOpen },
-            { path: '/visitor-log', label: t('visitor_log'), icon: ClipboardList },
-            { path: '/complaints', label: t('resident_complaints'), icon: ShieldAlert },
-            { path: '/unblock-requests', label: t('unblock_requests'), icon: Unlock },
-            { path: '/notices', label: t('notices'), icon: Megaphone },
-            { path: '/maintenance', label: t('maintenance'), icon: Receipt },
-            { path: '/analytics', label: t('analytics'), icon: BarChart2 },
-            { path: '/integrations', label: t('integrations'), icon: ShieldCheck },
-            { path: '/backup', label: t('backup'), icon: Database },
-            { path: '/my-roles', label: t('my_roles'), icon: Users }
-        ]
-    }
-];
+
 
 // Dashboard Overview
 const DashboardHome = () => {
@@ -105,10 +84,10 @@ const DashboardHome = () => {
 
     // Visual data for "charts"
     const statsData = [
-        { label: 'Visitors', count: societyVisitors.length, icon: UserPlus, color: 'var(--primary-500)' },
-        { label: 'Residents', count: societyResidents.length, icon: Users, color: 'var(--success-500)' },
-        { label: 'Complaints', count: societyComplaints.length, icon: ShieldAlert, color: 'var(--error-500)' },
-        { label: 'Bookings', count: societyBookings.length, icon: Building2, color: 'var(--warning-500)' },
+        { label: t('visitors'), count: societyVisitors.length, icon: UserPlus, color: 'var(--primary-500)' },
+        { label: t('residents'), count: societyResidents.length, icon: Users, color: 'var(--success-500)' },
+        { label: t('complaints'), count: societyComplaints.length, icon: ShieldAlert, color: 'var(--error-500)' },
+        { label: t('amenities'), count: societyAmenities.length, icon: Building2, color: 'var(--warning-500)' },
     ];
 
     return (
@@ -1837,6 +1816,29 @@ const AdminDashboard = () => {
     const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
     const isActive = isSocietyActive(roleSocietyId);
     const society = getSocietyById(roleSocietyId);
+
+    const sidebarItems = [
+        {
+            title: 'Main',
+            items: [
+                { path: '', label: t('dashboard'), icon: LayoutDashboard },
+                { path: '/residents', label: t('residents'), icon: Users },
+                { path: '/security', label: t('security'), icon: Shield },
+                { path: '/amenities', label: t('manage_amenities'), icon: Building2 },
+                { path: '/staff', label: t('staff'), icon: Contact },
+                { path: '/docs', label: t('society_docs'), icon: BookOpen },
+                { path: '/visitor-log', label: t('visitor_log'), icon: ClipboardList },
+                { path: '/complaints', label: t('resident_complaints'), icon: ShieldAlert },
+                { path: '/unblock-requests', label: t('unblock_requests'), icon: Unlock },
+                { path: '/notices', label: t('notices'), icon: Megaphone },
+                { path: '/maintenance', label: t('maintenance'), icon: Receipt },
+                { path: '/analytics', label: t('analytics'), icon: BarChart2 },
+                { path: '/integrations', label: t('integrations'), icon: ShieldCheck },
+                { path: '/backup', label: t('backup'), icon: Database },
+                { path: '/my-roles', label: t('my_roles'), icon: Users }
+            ]
+        }
+    ];
 
     return (
         <div className="app-container">

@@ -17,21 +17,9 @@ import {
 import NoticeBoard from '../../components/NoticeBoard';
 import { formatDateTime, getInitials, getRoleLabel } from '../../utils/validators';
 import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
+import { t } from '../../utils/i18n';
 
-const sidebarItems = [
-    {
-        title: 'Main',
-        items: [
-            { path: '', label: 'Dashboard', icon: LayoutDashboard },
-            { path: '/new-visitor', label: 'New Visitor Entry', icon: UserPlus },
-            { path: '/active-visits', label: 'Active Visits', icon: ClipboardList },
-            { path: '/verify-pass', label: 'Verify Pass', icon: Ticket },
-            { path: '/vehicle-lookup', label: 'Vehicle Lookup', icon: Car },
-            { path: '/staff-gate', label: 'Staff Gate Logs', icon: Contact },
-            { path: '/notices', label: 'Notice Board', icon: Megaphone }
-        ]
-    }
-];
+
 
 // Dashboard Overview
 const DashboardHome = () => {
@@ -66,7 +54,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{todayVisitors.length}</div>
-                        <div className="stat-label">Today's Entries</div>
+                        <div className="stat-label">{t('todays_entries')}</div>
                     </div>
                 </div>
 
@@ -76,7 +64,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{pendingVisitors.length}</div>
-                        <div className="stat-label">Pending Approval</div>
+                        <div className="stat-label">{t('pending_approval')}</div>
                     </div>
                 </div>
 
@@ -86,7 +74,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{activeVisitors.length}</div>
-                        <div className="stat-label">Currently Inside</div>
+                        <div className="stat-label">{t('currently_inside')}</div>
                     </div>
                 </div>
             </div>
@@ -1054,6 +1042,21 @@ const SOSAlertOverlay = () => {
 
 // Main Dashboard Layout
 const SecurityDashboard = () => {
+    const sidebarItems = [
+        {
+            title: 'Main',
+            items: [
+                { path: '', label: t('dashboard'), icon: LayoutDashboard },
+                { path: '/new-visitor', label: t('new_visitor'), icon: UserPlus },
+                { path: '/active-visits', label: t('active_visits'), icon: ClipboardList },
+                { path: '/verify-pass', label: t('verify_pass'), icon: Ticket },
+                { path: '/vehicle-lookup', label: t('vehicle_lookup'), icon: Car },
+                { path: '/staff-gate', label: t('staff_gate'), icon: Contact },
+                { path: '/notices', label: t('notices'), icon: Megaphone }
+            ]
+        }
+    ];
+
     const { currentRole } = useAuth();
     const { isSocietyActive, getSocietyById, loading } = useData();
 

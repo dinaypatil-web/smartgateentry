@@ -23,29 +23,9 @@ import MyRoles from '../shared/MyRoles';
 import NoticeForm from '../../components/NoticeForm';
 import InviteForm from '../../components/InviteForm';
 import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
+import { t } from '../../utils/i18n';
 
-const sidebarItems = [
-    {
-        title: 'Main',
-        items: [
-            { path: '', label: 'Dashboard', icon: LayoutDashboard },
-            { path: '/pending', label: 'Pending Approvals', icon: UserCheck },
-            { path: '/invites', label: 'Invites', icon: Ticket },
-            { path: '/vehicles', label: 'My Vehicles', icon: Car },
-            { path: '/amenities', label: 'Amenities', icon: Building2 },
-            { path: '/directory', label: 'Common Directory', icon: Briefcase },
-            { path: '/community-board', label: 'Community Board', icon: Package },
-            { path: '/staff', label: 'Staff Directory', icon: Contact },
-            { path: '/docs', label: 'Knowledge Hub', icon: BookOpen },
-            { path: '/complaints', label: 'Helpdesk', icon: ClipboardList },
-            { path: '/notices', label: 'Notice Board', icon: Megaphone },
-            { path: '/maintenance', label: 'Maintenance', icon: Receipt },
-            { path: '/history', label: 'Visit History', icon: History },
-            { path: '/blocked', label: 'Blocked Visitors', icon: Ban },
-            { path: '/my-roles', label: 'My Roles', icon: Users }
-        ]
-    }
-];
+
 
 // Dashboard Overview
 const DashboardHome = () => {
@@ -100,7 +80,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{pendingVisitors.length}</div>
-                        <div className="stat-label">Pending Approvals</div>
+                        <div className="stat-label">{t('pending_approvals')}</div>
                     </div>
                 </div>
 
@@ -110,7 +90,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{approvedToday.length}</div>
-                        <div className="stat-label">Approved Today</div>
+                        <div className="stat-label">{t('approved_today')}</div>
                     </div>
                 </div>
 
@@ -120,7 +100,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{blockedVisitors.length}</div>
-                        <div className="stat-label">Blocked Visitors</div>
+                        <div className="stat-label">{t('blocked_visitors')}</div>
                     </div>
                 </div>
             </div>
@@ -660,7 +640,28 @@ const ResidentDashboard = () => {
     const isActive = isSocietyActive(roleSocietyId);
     const society = getSocietyById(roleSocietyId);
 
-
+    const sidebarItems = [
+        {
+            title: 'Main',
+            items: [
+                { path: '', label: t('dashboard'), icon: LayoutDashboard },
+                { path: '/pending', label: t('pending_approvals'), icon: UserCheck },
+                { path: '/invites', label: t('invites'), icon: Ticket },
+                { path: '/vehicles', label: t('my_vehicles'), icon: Car },
+                { path: '/amenities', label: t('amenities'), icon: Building2 },
+                { path: '/directory', label: t('common_directory'), icon: Briefcase },
+                { path: '/community-board', label: t('community_board'), icon: Package },
+                { path: '/staff', label: t('staff_directory'), icon: Contact },
+                { path: '/docs', label: t('knowledge_hub'), icon: BookOpen },
+                { path: '/complaints', label: t('helpdesk'), icon: ClipboardList },
+                { path: '/notices', label: t('notices'), icon: Megaphone },
+                { path: '/maintenance', label: t('maintenance'), icon: Receipt },
+                { path: '/history', label: t('visit_history'), icon: History },
+                { path: '/blocked', label: t('blocked_visitors'), icon: Ban },
+                { path: '/my-roles', label: t('my_roles'), icon: Users }
+            ]
+        }
+    ];
 
     return (
         <div className="app-container">

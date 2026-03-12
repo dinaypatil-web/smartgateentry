@@ -18,18 +18,7 @@ import { formatDate, getRoleLabel } from '../../utils/validators';
 import * as storageUtils from '../../utils/storage';
 import { t } from '../../utils/i18n';
 
-const sidebarItems = [
-    {
-        title: 'Main',
-        items: [
-            { path: '', label: t('dashboard'), icon: LayoutDashboard },
-            { path: '/societies', label: t('societies'), icon: Building2 },
-            { path: '/administrators', label: t('administrators'), icon: Users },
-            { path: '/my-roles', label: t('my_roles'), icon: UserCheck },
-            { path: '/backup', label: t('backup'), icon: Database }
-        ]
-    }
-];
+
 
 // Dashboard Overview
 const DashboardHome = () => {
@@ -67,7 +56,7 @@ const DashboardHome = () => {
                         <div className="stat-value">
                             {users.filter(u => u.roles.some(r => r.role === 'administrator' && r.status === 'approved')).length}
                         </div>
-                        <div className="stat-label">Active Administrators</div>
+                        <div className="stat-label">{t('administrators')}</div>
                     </div>
                 </div>
 
@@ -77,7 +66,7 @@ const DashboardHome = () => {
                     </div>
                     <div className="stat-content">
                         <div className="stat-value">{pendingAdmins.length}</div>
-                        <div className="stat-label">Pending Approvals</div>
+                        <div className="stat-label">{t('pending_approvals')}</div>
                     </div>
                 </div>
             </div>
@@ -747,6 +736,19 @@ const DataBackupPage = () => {
 
 // Main Dashboard Layout
 const SuperadminDashboard = () => {
+    const sidebarItems = [
+        {
+            title: 'Main',
+            items: [
+                { path: '', label: t('dashboard'), icon: LayoutDashboard },
+                { path: '/societies', label: t('societies'), icon: Building2 },
+                { path: '/administrators', label: t('administrators'), icon: Users },
+                { path: '/my-roles', label: t('my_roles'), icon: UserCheck },
+                { path: '/backup', label: t('backup'), icon: Database }
+            ]
+        }
+    ];
+
     return (
         <div className="app-container">
             <Sidebar items={sidebarItems} basePath="/superadmin" />
