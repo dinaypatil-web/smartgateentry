@@ -14,6 +14,7 @@ export const useUI = () => {
 export const UIProvider = ({ children }) => {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    const [language, setLanguage] = useState(localStorage.getItem('lang') || 'en');
     const location = useLocation();
 
     // Persist theme and apply class to document element
@@ -25,6 +26,11 @@ export const UIProvider = ({ children }) => {
             document.documentElement.classList.remove('light-theme');
         }
     }, [theme]);
+
+    // Persist language
+    useEffect(() => {
+        localStorage.setItem('lang', language);
+    }, [language]);
 
     // Close sidebar when route changes on mobile
     useEffect(() => {
@@ -39,12 +45,19 @@ export const UIProvider = ({ children }) => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
     };
 
+    const changeLanguage = (lang) => {
+        localStorage.setItem('lang', lang);
+        setLanguage(lang);
+    };
+
     const value = {
         mobileSidebarOpen,
         setMobileSidebarOpen,
         toggleMobileSidebar,
         theme,
-        toggleTheme
+        toggleTheme,
+        language,
+        changeLanguage
     };
 
     return (

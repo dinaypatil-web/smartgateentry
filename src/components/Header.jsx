@@ -10,7 +10,7 @@ const Header = ({ title }) => {
     const navigate = useNavigate();
     const { currentUser, currentRole, logout } = useAuth();
     const { getSocietyById, triggerSOS } = useData();
-    const { toggleMobileSidebar, theme, toggleTheme } = useUI();
+    const { toggleMobileSidebar, theme, toggleTheme, language, changeLanguage } = useUI();
     const [isTriggeringSOS, setIsTriggeringSOS] = useState(false);
 
     const [showDropdown, setShowDropdown] = useState(false);
@@ -82,10 +82,10 @@ const Header = ({ title }) => {
                         <>
                             <div className="dropdown-backdrop" onClick={() => setShowLangMenu(false)} />
                             <div className="dropdown-menu">
-                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'en'); window.location.reload(); }}>English</button>
-                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'hi'); window.location.reload(); }}>हिंदी (Hindi)</button>
-                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'mr'); window.location.reload(); }}>मराठी (Marathi)</button>
-                                <button className="dropdown-item" onClick={() => { localStorage.setItem('lang', 'gu'); window.location.reload(); }}>ગુજરાતી (Gujarati)</button>
+                                <button className="dropdown-item" onClick={() => { changeLanguage('en'); setShowLangMenu(false); }}>English</button>
+                                <button className="dropdown-item" onClick={() => { changeLanguage('hi'); setShowLangMenu(false); }}>हिंदी (Hindi)</button>
+                                <button className="dropdown-item" onClick={() => { changeLanguage('mr'); setShowLangMenu(false); }}>मराठी (Marathi)</button>
+                                <button className="dropdown-item" onClick={() => { changeLanguage('gu'); setShowLangMenu(false); }}>ગુજરાતી (Gujarati)</button>
                             </div>
                         </>
                     )}

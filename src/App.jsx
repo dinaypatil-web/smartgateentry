@@ -69,8 +69,11 @@ const PublicRoute = ({ children }) => {
     return children;
 };
 
+import { useUI } from './context/UIContext';
+
 function App() {
     const { loading } = useAuth();
+    const { language } = useUI();
 
     if (loading) {
         return (

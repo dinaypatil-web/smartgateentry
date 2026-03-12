@@ -20,22 +20,40 @@ export const AuthProvider = ({ children }) => {
     const { getUserByEmail, getUserByLoginName, getUserById, addUser, updateUser, hasSuperadmin } = useData();
 
     useEffect(() => {
-        // Load session from localStorage
-        const savedUser = storage.getCurrentUser();
-        const savedRole = storage.getCurrentRole();
+        const initAuth = async () => {
+            // Load session from localStorage
+            const savedUser = storage.getCurrentUser();
+            const savedRole = storage.getCurrentRole();
 
-        if (savedUser) {
-            // Refresh user data from storage
-            const freshUser = storage.getUserById(savedUser.id);
-            if (freshUser) {
-                setCurrentUser(freshUser);
+            if (savedUser) {
+                // Trust the saved user initially to prevent logout flickers
+                setCurrentUser(savedUser);
                 setCurrentRole(savedRole);
-            } else {
-                // User no longer exists, clear session
-                storage.clearCurrentUser();
+
+                // Refresh user data from storage asynchronously
+                try {
+                    let freshUser;
+                    if (storageApi.isUsingOnlineStorage()) {
+                        freshUser = await storageApi.getUserById(savedUser.id);
+                    } else {
+                        freshUser = storage.getUserById(savedUser.id);
+                    }
+
+                    if (freshUser) {
+                        setCurrentUser(freshUser);
+                        storage.setCurrentUser(freshUser);
+                    }
+                    // We don't clear the session if freshUser is not found immediately, 
+                    // as it might be a temporary network issue or eventual consistency.
+                    // Only log out if the refresh explicitly indicates the user is gone/unauthorized.
+                } catch (error) {
+                    console.error('AuthContext: Failed to refresh user data:', error);
+                }
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+
+        initAuth();
     }, []);
 
     const login = async (emailOrLoginName, password) => {
