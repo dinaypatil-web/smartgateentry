@@ -1473,11 +1473,43 @@ const StaffAdminPage = () => {
 // Amenities Management for Admin
 const AmenitiesAdminPage = () => {
     const { currentRole } = useAuth();
-    const { amenities, addDataItem, deleteDataItem } = useData();
+    const { amenities, bookings, users, addDataItem, updateDataItem, deleteDataItem } = useData();
     const [showAdd, setShowAdd] = useState(false);
+    const [activeTab, setActiveTab] = useState('manage'); // 'manage' or 'bookings'
     const [formData, setFormData] = useState({ name: '', description: '', capacity: '', rules: '' });
 
-    const societyAmenities = amenities.filter(a => (a.societyId === currentRole.societyId || a.societyid === currentRole.societyId));
+    const roleSocietyId = currentRole?.societyId || currentRole?.societyid;
+    const societyAmenities = amenities.filter(a => (a.societyId === roleSocietyId || a.societyid === roleSocietyId));
+    const societyBookings = bookings.filter(b => (b.societyId === roleSocietyId || b.societyid === roleSocietyId));
+
+    const getResidentInfo = (residentId) => {
+        const resident = users.find(u => u.id === residentId);
+        if (!resident) return { name: 'Unknown', flat: 'N/A' };
+        const role = resident.roles?.find(r => (r.societyId === roleSocietyId || r.societyid === roleSocietyId));
+        return { 
+            name: resident.name, 
+            flat: role ? `${role.block || ''}-${role.flatNumber || ''}` : 'N/A' 
+        };
+    };
+
+    const getAmenityName = (id) => {
+        const amenity = amenities.find(a => a.id === id);
+        return amenity ? amenity.name : 'Unknown Amenity';
+    };
+
+    const handleCloseBooking = async (bookingId) => {
+        if (!confirm('Are you sure you want to close/cancel this booking?')) return;
+        try {
+            await updateDataItem('bookings', bookingId, { 
+                status: 'cancelled', 
+                cancelledBy: 'administrator',
+                updatedAt: new Date().toISOString() 
+            });
+        } catch (error) {
+            console.error('Failed to close booking:', error);
+            alert('Failed to close booking. Please try again.');
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -1493,34 +1525,114 @@ const AmenitiesAdminPage = () => {
     return (
         <div>
             <div className="flex-between mb-6">
-                <h2>Manage Society Amenities</h2>
-                <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
-                    <Plus size={18} />
-                    Add Amenity
+                <div>
+                    <h2>Amenities Management</h2>
+                    <p className="text-muted text-sm">Manage society facilities and track resident bookings</p>
+                </div>
+                {activeTab === 'manage' && (
+                    <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+                        <Plus size={18} />
+                        Add Amenity
+                    </button>
+                )}
+            </div>
+
+            <div className="tabs mb-8">
+                <button 
+                    className={`tab ${activeTab === 'manage' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('manage')}
+                >
+                    Manage Amenities
+                </button>
+                <button 
+                    className={`tab ${activeTab === 'bookings' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('bookings')}
+                >
+                    Recent Bookings ({societyBookings.length})
                 </button>
             </div>
 
-            {societyAmenities.length === 0 ? (
-                <EmptyState icon={Building2} title="No Amenities" description="Add amenities like Gym, Pool, or Clubhouse for residents to book." />
-            ) : (
-                <div className="grid-3">
-                    {societyAmenities.map(amenity => (
-                        <div key={amenity.id} className="card amenity-card">
-                            <div className="flex-between mb-4">
-                                <div className="p-3 bg-primary-900/40 rounded-xl text-primary-400">
-                                    <Building2 size={24} />
+            {activeTab === 'manage' ? (
+                societyAmenities.length === 0 ? (
+                    <EmptyState icon={Building2} title="No Amenities" description="Add amenities like Gym, Pool, or Clubhouse for residents to book." />
+                ) : (
+                    <div className="grid-3 animate-fadeIn">
+                        {societyAmenities.map(amenity => (
+                            <div key={amenity.id} className="card amenity-card">
+                                <div className="flex-between mb-4">
+                                    <div className="p-3 bg-primary-900/40 rounded-xl text-primary-400">
+                                        <Building2 size={24} />
+                                    </div>
+                                    <button className="btn-icon text-error-600" onClick={() => deleteDataItem('amenities', amenity.id)}>
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
-                                <button className="btn-icon text-error-600" onClick={() => deleteDataItem('amenities', amenity.id)}>
-                                    <Trash2 size={16} />
-                                </button>
+                                <h3 className="text-xl font-bold mb-1">{amenity.name}</h3>
+                                <p className="text-sm text-muted mb-4 line-clamp-2">{amenity.description}</p>
+                                <div className="pt-4 border-t border-glass text-xs font-semibold text-muted uppercase tracking-widest">
+                                    Capacity: {amenity.capacity} people
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold mb-1">{amenity.name}</h3>
-                            <p className="text-sm text-muted mb-4 line-clamp-2">{amenity.description}</p>
-                            <div className="pt-4 border-t border-glass text-xs font-semibold text-muted uppercase tracking-widest">
-                                Capacity: {amenity.capacity} people
+                        ))}
+                    </div>
+                )
+            ) : (
+                <div className="animate-fadeIn">
+                    {societyBookings.length === 0 ? (
+                        <EmptyState 
+                            icon={ClipboardList} 
+                            title="No Bookings Yet" 
+                            description="Resident bookings will appear here once they start using the facilities." 
+                        />
+                    ) : (
+                        <div className="card">
+                            <div className="table-container">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Resident</th>
+                                            <th>Amenity</th>
+                                            <th>Date & Slot</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {societyBookings.sort((a, b) => new Date(b.date) - new Date(a.date)).map(booking => {
+                                            const resident = getResidentInfo(booking.residentId);
+                                            return (
+                                                <tr key={booking.id}>
+                                                    <td>
+                                                        <div className="font-bold">{resident.name}</div>
+                                                        <div className="text-xs text-muted">Flat {resident.flat}</div>
+                                                    </td>
+                                                    <td className="font-medium text-primary-400">{getAmenityName(booking.amenityId)}</td>
+                                                    <td>
+                                                        <div className="text-sm font-semibold">{new Date(booking.date).toLocaleDateString()}</div>
+                                                        <div className="text-xs text-muted">{booking.slot}</div>
+                                                    </td>
+                                                    <td>
+                                                        <StatusBadge status={booking.status} />
+                                                    </td>
+                                                    <td>
+                                                        {booking.status === 'confirmed' && (
+                                                            <button 
+                                                                className="btn btn-ghost btn-sm text-error-500"
+                                                                onClick={() => handleCloseBooking(booking.id)}
+                                                            >
+                                                                <Trash2 size={14} />
+                                                                Close/Cancel
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
 
