@@ -37,15 +37,23 @@ const playChime = () => {
 };
 
 export default function VisitorNotification() {
-    const { visitors } = useData();
+    const { visitors, loading } = useData();
     const { currentUser } = useAuth();
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     const knownVisitorIds = useRef(new Set());
     const isInitialLoad = useRef(true);
 
+    // Request notification permission on mount
     useEffect(() => {
-        if (!currentUser || !visitors || visitors.length === 0) return;
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }, []);
+
+    useEffect(() => {
+        // Wait until initial data fetch completes before observing changes
+        if (!currentUser || !visitors || loading) return;
         
         const residentVisitors = visitors.filter(v => {
             const resId = v.residentId || v.residentid;
@@ -70,8 +78,24 @@ export default function VisitorNotification() {
             
             // Play sound
             playChime();
+
+            // Native browser notification (works when tab is in background)
+            if ('Notification' in window && Notification.permission === 'granted') {
+                newVisitors.forEach(v => {
+                    const notice = new Notification('SmartGate: Visitor Alert', {
+                        body: `${v.name} is waiting at the gate for your approval.`,
+                        icon: '/favicon.ico',
+                        requireInteraction: true
+                    });
+                    notice.onclick = () => {
+                        window.focus();
+                        navigate('/resident/pending');
+                        notice.close();
+                    };
+                });
+            }
         }
-    }, [visitors, currentUser]);
+    }, [visitors, currentUser, loading, navigate]);
 
     // Cleanup notifications that were resolved outside the toast (e.g. approved on the page)
     useEffect(() => {
