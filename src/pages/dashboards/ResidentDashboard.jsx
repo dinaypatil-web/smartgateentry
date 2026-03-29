@@ -23,6 +23,7 @@ import MyRoles from '../shared/MyRoles';
 import NoticeForm from '../../components/NoticeForm';
 import InviteForm from '../../components/InviteForm';
 import InactiveSocietyOverlay from '../../components/InactiveSocietyOverlay';
+import VisitorNotification from '../../components/VisitorNotification';
 import { t } from '../../utils/i18n';
 
 
@@ -689,7 +690,8 @@ const ResidentDashboard = () => {
                     </Routes>
                 </div>
             </div>
-
+            
+            <VisitorNotification />
         </div>
     );
 };
